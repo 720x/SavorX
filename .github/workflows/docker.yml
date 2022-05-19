@@ -16,4 +16,10 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      -
+      - name: Extract metadata (tags, labels) for Docker
+        id: meta
+        uses: docker/metadata-action@v3
+        with:
+          images: spawnia/md-to-pdf
+
+      - nam
