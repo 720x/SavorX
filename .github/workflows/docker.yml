@@ -27,4 +27,10 @@ jobs:
         uses: docker/login-action@v1
         with:
           username: spawnia
-          password: ${{ sec
+          password: ${{ secrets.DOCKER_PASSWORD }}
+
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v2
+        with:
+          context: .
+          push: ${{ github.e
