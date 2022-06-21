@@ -1,0 +1,13 @@
+
+[package]
+name = "md-to-pdf"
+authors = ["spawnia <benedikt@franke.tech>"]
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+rocket = "0.5"
+rocket_cors = "0.6"
+tempfile = "3"
+log = "0.4"
