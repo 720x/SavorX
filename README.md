@@ -20,4 +20,10 @@ If you need guaranteed availability, [deploy it yourself](#deploy).
 
 ## API
 
-You can convert markdown by sending a `POST` request to `https://md
+You can convert markdown by sending a `POST` request to `https://md-to-pdf.fly.dev`.
+
+```shell
+curl --data-urlencode 'markdown=# Heading 1' --output md-to-pdf.pdf https://md-to-pdf.fly.dev
+```
+
+| Parameter  | Required | Description                       
