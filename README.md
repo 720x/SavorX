@@ -27,4 +27,6 @@ curl --data-urlencode 'markdown=# Heading 1' --output md-to-pdf.pdf https://md-t
 ```
 
 | Parameter  | Required | Description                                                                                           |
-|------------|----------|--------------------------------------------------------------------
+|------------|----------|-------------------------------------------------------------------------------------------------------|
+| `markdown` | Required | The markdown content to convert                                                                       |
+| `css`      | Op
