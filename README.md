@@ -30,4 +30,14 @@ curl --data-urlencode 'markdown=# Heading 1' --output md-to-pdf.pdf https://md-t
 |------------|----------|-------------------------------------------------------------------------------------------------------|
 | `markdown` | Required | The markdown content to convert                                                                       |
 | `css`      | Optional | CSS styles to apply                                                                                   |
-| `engine`   | Optional | The PDF conversion engine, can be `weasyprint`, `wkht
+| `engine`   | Optional | The PDF conversion engine, can be `weasyprint`, `wkhtmltopdf` or `pdflatex`, defaults to `weasyprint` |
+
+Send data from files like this:
+
+```shell
+curl --data-urlencode "markdown=$(cat example.md)" 
+```
+
+## Deploy
+
+A prebuilt con
