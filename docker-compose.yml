@@ -1,4 +1,13 @@
 services:
   rust:
     build:
+      context: .
+      dockerfile: rust.dockerfile
+    volumes:
+      - ./:/workdir
+    working_dir: /workdir
+    tty: true
+
+  pandoc:
+    build:
       cont
