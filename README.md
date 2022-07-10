@@ -49,4 +49,11 @@ You can run it yourself like this:
 docker run --publish=8000:8000 spawnia/md-to-pdf
 ```
 
-You may configure the webserver through [Rocket environment variables](https://rocket.
+You may configure the webserver through [Rocket environment variables](https://rocket.rs/guide/v0.5/configuration#environment-variables).
+For example, you could allow larger payloads by increasing the limit for form data:
+
+```dotenv
+ROCKET_LIMITS={form="1MiB"}
+```
+
+## Built
