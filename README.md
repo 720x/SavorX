@@ -40,4 +40,5 @@ curl --data-urlencode "markdown=$(cat example.md)"
 
 ## Deploy
 
-A prebuilt con
+A prebuilt container image is available at [Docker Hub](https://hub.docker.com/r/spawnia/md-to-pdf).
+The container starts up the web service and listens for HTTP on port 
