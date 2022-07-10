@@ -56,4 +56,8 @@ For example, you could allow larger payloads by increasing the limit for form da
 ROCKET_LIMITS={form="1MiB"}
 ```
 
-## Built
+## Built with
+
+- [Rocket - a web framework for Rust](https://rocket.rs)
+- [Pandoc - a universal document converter](https://pandoc.org)
+- [Codemirror - a text editor for the 
