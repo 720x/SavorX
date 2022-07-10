@@ -60,4 +60,4 @@ ROCKET_LIMITS={form="1MiB"}
 
 - [Rocket - a web framework for Rust](https://rocket.rs)
 - [Pandoc - a universal document converter](https://pandoc.org)
-- [Codemirror - a text editor for the 
+- [Codemirror - a text editor for the browser](https://codemirror.net)
