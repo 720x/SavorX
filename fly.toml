@@ -20,4 +20,13 @@ processes = []
   [services.concurrency]
     hard_limit = 25
     soft_limit = 20
-    type = "connect
+    type = "connections"
+
+  [[services.ports]]
+    force_https = true
+    handlers = ["http"]
+    port = 80
+
+  [[services.ports]]
+    handlers = ["tls", "http"]
+    port 
