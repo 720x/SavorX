@@ -29,4 +29,9 @@ processes = []
 
   [[services.ports]]
     handlers = ["tls", "http"]
-    port 
+    port = 443
+
+  # Ensure CORS headers are also sent when the application is down
+  [services.ports.http_options.response.headers]
+  Access-Control-Allow-Origin = "*"
+  Access-Control-Allow-M
