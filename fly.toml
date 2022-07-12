@@ -34,4 +34,11 @@ processes = []
   # Ensure CORS headers are also sent when the application is down
   [services.ports.http_options.response.headers]
   Access-Control-Allow-Origin = "*"
-  Access-Control-Allow-M
+  Access-Control-Allow-Methods = "GET, POST, OPTIONS"
+  Access-Control-Allow-Headers = "*"
+
+  [[services.tcp_checks]]
+    grace_period = "1s"
+    interval = "15s"
+    restart_limit = 0
+    timeout = "2s"
