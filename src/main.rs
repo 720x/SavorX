@@ -152,3 +152,9 @@ fn rocket() -> _ {
                 .collect(),
         )
         .to_cors();
+
+    rocket::build()
+        .attach(cors.unwrap())
+        .mount("/", routes![convert])
+        .mount("/", FileServer::from("static"))
+}
