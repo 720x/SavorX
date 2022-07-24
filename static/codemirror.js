@@ -567,3 +567,175 @@
     if (!handlers.length) { return }
     var args = Array.prototype.slice.call(arguments, 2);
     for (var i = 0; i < handlers.length; ++i) { handlers[i].apply(null, args); }
+  }
+
+  // The DOM events that CodeMirror handles can be overridden by
+  // registering a (non-DOM) handler on the editor for the event name,
+  // and preventDefault-ing the event in that handler.
+  function signalDOMEvent(cm, e, override) {
+    if (typeof e == "string")
+      { e = {type: e, preventDefault: function() { this.defaultPrevented = true; }}; }
+    signal(cm, override || e.type, cm, e);
+    return e_defaultPrevented(e) || e.codemirrorIgnore
+  }
+
+  function signalCursorActivity(cm) {
+    var arr = cm._handlers && cm._handlers.cursorActivity;
+    if (!arr) { return }
+    var set = cm.curOp.cursorActivityHandlers || (cm.curOp.cursorActivityHandlers = []);
+    for (var i = 0; i < arr.length; ++i) { if (indexOf(set, arr[i]) == -1)
+      { set.push(arr[i]); } }
+  }
+
+  function hasHandler(emitter, type) {
+    return getHandlers(emitter, type).length > 0
+  }
+
+  // Add on and off methods to a constructor's prototype, to make
+  // registering events on such objects more convenient.
+  function eventMixin(ctor) {
+    ctor.prototype.on = function(type, f) {on(this, type, f);};
+    ctor.prototype.off = function(type, f) {off(this, type, f);};
+  }
+
+  // Due to the fact that we still support jurassic IE versions, some
+  // compatibility wrappers are needed.
+
+  function e_preventDefault(e) {
+    if (e.preventDefault) { e.preventDefault(); }
+    else { e.returnValue = false; }
+  }
+  function e_stopPropagation(e) {
+    if (e.stopPropagation) { e.stopPropagation(); }
+    else { e.cancelBubble = true; }
+  }
+  function e_defaultPrevented(e) {
+    return e.defaultPrevented != null ? e.defaultPrevented : e.returnValue == false
+  }
+  function e_stop(e) {e_preventDefault(e); e_stopPropagation(e);}
+
+  function e_target(e) {return e.target || e.srcElement}
+  function e_button(e) {
+    var b = e.which;
+    if (b == null) {
+      if (e.button & 1) { b = 1; }
+      else if (e.button & 2) { b = 3; }
+      else if (e.button & 4) { b = 2; }
+    }
+    if (mac && e.ctrlKey && b == 1) { b = 3; }
+    return b
+  }
+
+  // Detect drag-and-drop
+  var dragAndDrop = function() {
+    // There is *some* kind of drag-and-drop support in IE6-8, but I
+    // couldn't get it to work yet.
+    if (ie && ie_version < 9) { return false }
+    var div = elt('div');
+    return "draggable" in div || "dragDrop" in div
+  }();
+
+  var zwspSupported;
+  function zeroWidthElement(measure) {
+    if (zwspSupported == null) {
+      var test = elt("span", "\u200b");
+      removeChildrenAndAdd(measure, elt("span", [test, document.createTextNode("x")]));
+      if (measure.firstChild.offsetHeight != 0)
+        { zwspSupported = test.offsetWidth <= 1 && test.offsetHeight > 2 && !(ie && ie_version < 8); }
+    }
+    var node = zwspSupported ? elt("span", "\u200b") :
+      elt("span", "\u00a0", null, "display: inline-block; width: 1px; margin-right: -1px");
+    node.setAttribute("cm-text", "");
+    return node
+  }
+
+  // Feature-detect IE's crummy client rect reporting for bidi text
+  var badBidiRects;
+  function hasBadBidiRects(measure) {
+    if (badBidiRects != null) { return badBidiRects }
+    var txt = removeChildrenAndAdd(measure, document.createTextNode("A\u062eA"));
+    var r0 = range(txt, 0, 1).getBoundingClientRect();
+    var r1 = range(txt, 1, 2).getBoundingClientRect();
+    removeChildren(measure);
+    if (!r0 || r0.left == r0.right) { return false } // Safari returns null in some cases (#2780)
+    return badBidiRects = (r1.right - r0.right < 3)
+  }
+
+  // See if "".split is the broken IE version, if so, provide an
+  // alternative way to split lines.
+  var splitLinesAuto = "\n\nb".split(/\n/).length != 3 ? function (string) {
+    var pos = 0, result = [], l = string.length;
+    while (pos <= l) {
+      var nl = string.indexOf("\n", pos);
+      if (nl == -1) { nl = string.length; }
+      var line = string.slice(pos, string.charAt(nl - 1) == "\r" ? nl - 1 : nl);
+      var rt = line.indexOf("\r");
+      if (rt != -1) {
+        result.push(line.slice(0, rt));
+        pos += rt + 1;
+      } else {
+        result.push(line);
+        pos = nl + 1;
+      }
+    }
+    return result
+  } : function (string) { return string.split(/\r\n?|\n/); };
+
+  var hasSelection = window.getSelection ? function (te) {
+    try { return te.selectionStart != te.selectionEnd }
+    catch(e) { return false }
+  } : function (te) {
+    var range$$1;
+    try {range$$1 = te.ownerDocument.selection.createRange();}
+    catch(e) {}
+    if (!range$$1 || range$$1.parentElement() != te) { return false }
+    return range$$1.compareEndPoints("StartToEnd", range$$1) != 0
+  };
+
+  var hasCopyEvent = (function () {
+    var e = elt("div");
+    if ("oncopy" in e) { return true }
+    e.setAttribute("oncopy", "return;");
+    return typeof e.oncopy == "function"
+  })();
+
+  var badZoomedRects = null;
+  function hasBadZoomedRects(measure) {
+    if (badZoomedRects != null) { return badZoomedRects }
+    var node = removeChildrenAndAdd(measure, elt("span", "x"));
+    var normal = node.getBoundingClientRect();
+    var fromRange = range(node, 0, 1).getBoundingClientRect();
+    return badZoomedRects = Math.abs(normal.left - fromRange.left) > 1
+  }
+
+  // Known modes, by name and by MIME
+  var modes = {}, mimeModes = {};
+
+  // Extra arguments are stored as the mode's dependencies, which is
+  // used by (legacy) mechanisms like loadmode.js to automatically
+  // load a mode. (Preferred mechanism is the require/define calls.)
+  function defineMode(name, mode) {
+    if (arguments.length > 2)
+      { mode.dependencies = Array.prototype.slice.call(arguments, 2); }
+    modes[name] = mode;
+  }
+
+  function defineMIME(mime, spec) {
+    mimeModes[mime] = spec;
+  }
+
+  // Given a MIME type, a {name, ...options} config object, or a name
+  // string, return a mode config object.
+  function resolveMode(spec) {
+    if (typeof spec == "string" && mimeModes.hasOwnProperty(spec)) {
+      spec = mimeModes[spec];
+    } else if (spec && typeof spec.name == "string" && mimeModes.hasOwnProperty(spec.name)) {
+      var found = mimeModes[spec.name];
+      if (typeof found == "string") { found = {name: found}; }
+      spec = createObj(found, spec);
+      spec.name = found.name;
+    } else if (typeof spec == "string" && /^[\w\-]+\/[\w\-]+\+xml$/.test(spec)) {
+      return resolveMode("application/xml")
+    } else if (typeof spec == "string" && /^[\w\-]+\/[\w\-]+\+json$/.test(spec)) {
+      return resolveMode("application/json")
+    }
