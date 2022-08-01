@@ -1338,3 +1338,170 @@
     var nw;
     if (old) { for (var i = 0; i < old.length; ++i) {
       var span = old[i], marker = span.marker;
+      var startsBefore = span.from == null || (marker.inclusiveLeft ? span.from <= startCh : span.from < startCh);
+      if (startsBefore || span.from == startCh && marker.type == "bookmark" && (!isInsert || !span.marker.insertLeft)) {
+        var endsAfter = span.to == null || (marker.inclusiveRight ? span.to >= startCh : span.to > startCh)
+        ;(nw || (nw = [])).push(new MarkedSpan(marker, span.from, endsAfter ? null : span.to));
+      }
+    } }
+    return nw
+  }
+  function markedSpansAfter(old, endCh, isInsert) {
+    var nw;
+    if (old) { for (var i = 0; i < old.length; ++i) {
+      var span = old[i], marker = span.marker;
+      var endsAfter = span.to == null || (marker.inclusiveRight ? span.to >= endCh : span.to > endCh);
+      if (endsAfter || span.from == endCh && marker.type == "bookmark" && (!isInsert || span.marker.insertLeft)) {
+        var startsBefore = span.from == null || (marker.inclusiveLeft ? span.from <= endCh : span.from < endCh)
+        ;(nw || (nw = [])).push(new MarkedSpan(marker, startsBefore ? null : span.from - endCh,
+                                              span.to == null ? null : span.to - endCh));
+      }
+    } }
+    return nw
+  }
+
+  // Given a change object, compute the new set of marker spans that
+  // cover the line in which the change took place. Removes spans
+  // entirely within the change, reconnects spans belonging to the
+  // same marker that appear on both sides of the change, and cuts off
+  // spans partially within the change. Returns an array of span
+  // arrays with one element for each line in (after) the change.
+  function stretchSpansOverChange(doc, change) {
+    if (change.full) { return null }
+    var oldFirst = isLine(doc, change.from.line) && getLine(doc, change.from.line).markedSpans;
+    var oldLast = isLine(doc, change.to.line) && getLine(doc, change.to.line).markedSpans;
+    if (!oldFirst && !oldLast) { return null }
+
+    var startCh = change.from.ch, endCh = change.to.ch, isInsert = cmp(change.from, change.to) == 0;
+    // Get the spans that 'stick out' on both sides
+    var first = markedSpansBefore(oldFirst, startCh, isInsert);
+    var last = markedSpansAfter(oldLast, endCh, isInsert);
+
+    // Next, merge those two ends
+    var sameLine = change.text.length == 1, offset = lst(change.text).length + (sameLine ? startCh : 0);
+    if (first) {
+      // Fix up .to properties of first
+      for (var i = 0; i < first.length; ++i) {
+        var span = first[i];
+        if (span.to == null) {
+          var found = getMarkedSpanFor(last, span.marker);
+          if (!found) { span.to = startCh; }
+          else if (sameLine) { span.to = found.to == null ? null : found.to + offset; }
+        }
+      }
+    }
+    if (last) {
+      // Fix up .from in last (or move them into first in case of sameLine)
+      for (var i$1 = 0; i$1 < last.length; ++i$1) {
+        var span$1 = last[i$1];
+        if (span$1.to != null) { span$1.to += offset; }
+        if (span$1.from == null) {
+          var found$1 = getMarkedSpanFor(first, span$1.marker);
+          if (!found$1) {
+            span$1.from = offset;
+            if (sameLine) { (first || (first = [])).push(span$1); }
+          }
+        } else {
+          span$1.from += offset;
+          if (sameLine) { (first || (first = [])).push(span$1); }
+        }
+      }
+    }
+    // Make sure we didn't create any zero-length spans
+    if (first) { first = clearEmptySpans(first); }
+    if (last && last != first) { last = clearEmptySpans(last); }
+
+    var newMarkers = [first];
+    if (!sameLine) {
+      // Fill gap with whole-line-spans
+      var gap = change.text.length - 2, gapMarkers;
+      if (gap > 0 && first)
+        { for (var i$2 = 0; i$2 < first.length; ++i$2)
+          { if (first[i$2].to == null)
+            { (gapMarkers || (gapMarkers = [])).push(new MarkedSpan(first[i$2].marker, null, null)); } } }
+      for (var i$3 = 0; i$3 < gap; ++i$3)
+        { newMarkers.push(gapMarkers); }
+      newMarkers.push(last);
+    }
+    return newMarkers
+  }
+
+  // Remove spans that are empty and don't have a clearWhenEmpty
+  // option of false.
+  function clearEmptySpans(spans) {
+    for (var i = 0; i < spans.length; ++i) {
+      var span = spans[i];
+      if (span.from != null && span.from == span.to && span.marker.clearWhenEmpty !== false)
+        { spans.splice(i--, 1); }
+    }
+    if (!spans.length) { return null }
+    return spans
+  }
+
+  // Used to 'clip' out readOnly ranges when making a change.
+  function removeReadOnlyRanges(doc, from, to) {
+    var markers = null;
+    doc.iter(from.line, to.line + 1, function (line) {
+      if (line.markedSpans) { for (var i = 0; i < line.markedSpans.length; ++i) {
+        var mark = line.markedSpans[i].marker;
+        if (mark.readOnly && (!markers || indexOf(markers, mark) == -1))
+          { (markers || (markers = [])).push(mark); }
+      } }
+    });
+    if (!markers) { return null }
+    var parts = [{from: from, to: to}];
+    for (var i = 0; i < markers.length; ++i) {
+      var mk = markers[i], m = mk.find(0);
+      for (var j = 0; j < parts.length; ++j) {
+        var p = parts[j];
+        if (cmp(p.to, m.from) < 0 || cmp(p.from, m.to) > 0) { continue }
+        var newParts = [j, 1], dfrom = cmp(p.from, m.from), dto = cmp(p.to, m.to);
+        if (dfrom < 0 || !mk.inclusiveLeft && !dfrom)
+          { newParts.push({from: p.from, to: m.from}); }
+        if (dto > 0 || !mk.inclusiveRight && !dto)
+          { newParts.push({from: m.to, to: p.to}); }
+        parts.splice.apply(parts, newParts);
+        j += newParts.length - 3;
+      }
+    }
+    return parts
+  }
+
+  // Connect or disconnect spans from a line.
+  function detachMarkedSpans(line) {
+    var spans = line.markedSpans;
+    if (!spans) { return }
+    for (var i = 0; i < spans.length; ++i)
+      { spans[i].marker.detachLine(line); }
+    line.markedSpans = null;
+  }
+  function attachMarkedSpans(line, spans) {
+    if (!spans) { return }
+    for (var i = 0; i < spans.length; ++i)
+      { spans[i].marker.attachLine(line); }
+    line.markedSpans = spans;
+  }
+
+  // Helpers used when computing which overlapping collapsed span
+  // counts as the larger one.
+  function extraLeft(marker) { return marker.inclusiveLeft ? -1 : 0 }
+  function extraRight(marker) { return marker.inclusiveRight ? 1 : 0 }
+
+  // Returns a number indicating which of two overlapping collapsed
+  // spans is larger (and thus includes the other). Falls back to
+  // comparing ids when the spans cover exactly the same range.
+  function compareCollapsedMarkers(a, b) {
+    var lenDiff = a.lines.length - b.lines.length;
+    if (lenDiff != 0) { return lenDiff }
+    var aPos = a.find(), bPos = b.find();
+    var fromCmp = cmp(aPos.from, bPos.from) || extraLeft(a) - extraLeft(b);
+    if (fromCmp) { return -fromCmp }
+    var toCmp = cmp(aPos.to, bPos.to) || extraRight(a) - extraRight(b);
+    if (toCmp) { return toCmp }
+    return b.id - a.id
+  }
+
+  // Find out whether a line ends or starts in a collapsed span. If
+  // so, return the marker for that span.
+  function collapsedSpanAtSide(line, start) {
+    var sps = sawCollapsedSpans && line.markedSpans, found;
