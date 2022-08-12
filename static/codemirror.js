@@ -2746,3 +2746,193 @@
 
   function coordsCharInner(cm, lineObj, lineNo$$1, x, y) {
     // Move y into line-local coordinate space
+    y -= heightAtLine(lineObj);
+    var preparedMeasure = prepareMeasureForLine(cm, lineObj);
+    // When directly calling `measureCharPrepared`, we have to adjust
+    // for the widgets at this line.
+    var widgetHeight$$1 = widgetTopHeight(lineObj);
+    var begin = 0, end = lineObj.text.length, ltr = true;
+
+    var order = getOrder(lineObj, cm.doc.direction);
+    // If the line isn't plain left-to-right text, first figure out
+    // which bidi section the coordinates fall into.
+    if (order) {
+      var part = (cm.options.lineWrapping ? coordsBidiPartWrapped : coordsBidiPart)
+                   (cm, lineObj, lineNo$$1, preparedMeasure, order, x, y);
+      ltr = part.level != 1;
+      // The awkward -1 offsets are needed because findFirst (called
+      // on these below) will treat its first bound as inclusive,
+      // second as exclusive, but we want to actually address the
+      // characters in the part's range
+      begin = ltr ? part.from : part.to - 1;
+      end = ltr ? part.to : part.from - 1;
+    }
+
+    // A binary search to find the first character whose bounding box
+    // starts after the coordinates. If we run across any whose box wrap
+    // the coordinates, store that.
+    var chAround = null, boxAround = null;
+    var ch = findFirst(function (ch) {
+      var box = measureCharPrepared(cm, preparedMeasure, ch);
+      box.top += widgetHeight$$1; box.bottom += widgetHeight$$1;
+      if (!boxIsAfter(box, x, y, false)) { return false }
+      if (box.top <= y && box.left <= x) {
+        chAround = ch;
+        boxAround = box;
+      }
+      return true
+    }, begin, end);
+
+    var baseX, sticky, outside = false;
+    // If a box around the coordinates was found, use that
+    if (boxAround) {
+      // Distinguish coordinates nearer to the left or right side of the box
+      var atLeft = x - boxAround.left < boxAround.right - x, atStart = atLeft == ltr;
+      ch = chAround + (atStart ? 0 : 1);
+      sticky = atStart ? "after" : "before";
+      baseX = atLeft ? boxAround.left : boxAround.right;
+    } else {
+      // (Adjust for extended bound, if necessary.)
+      if (!ltr && (ch == end || ch == begin)) { ch++; }
+      // To determine which side to associate with, get the box to the
+      // left of the character and compare it's vertical position to the
+      // coordinates
+      sticky = ch == 0 ? "after" : ch == lineObj.text.length ? "before" :
+        (measureCharPrepared(cm, preparedMeasure, ch - (ltr ? 1 : 0)).bottom + widgetHeight$$1 <= y) == ltr ?
+        "after" : "before";
+      // Now get accurate coordinates for this place, in order to get a
+      // base X position
+      var coords = cursorCoords(cm, Pos(lineNo$$1, ch, sticky), "line", lineObj, preparedMeasure);
+      baseX = coords.left;
+      outside = y < coords.top ? -1 : y >= coords.bottom ? 1 : 0;
+    }
+
+    ch = skipExtendingChars(lineObj.text, ch, 1);
+    return PosWithInfo(lineNo$$1, ch, sticky, outside, x - baseX)
+  }
+
+  function coordsBidiPart(cm, lineObj, lineNo$$1, preparedMeasure, order, x, y) {
+    // Bidi parts are sorted left-to-right, and in a non-line-wrapping
+    // situation, we can take this ordering to correspond to the visual
+    // ordering. This finds the first part whose end is after the given
+    // coordinates.
+    var index = findFirst(function (i) {
+      var part = order[i], ltr = part.level != 1;
+      return boxIsAfter(cursorCoords(cm, Pos(lineNo$$1, ltr ? part.to : part.from, ltr ? "before" : "after"),
+                                     "line", lineObj, preparedMeasure), x, y, true)
+    }, 0, order.length - 1);
+    var part = order[index];
+    // If this isn't the first part, the part's start is also after
+    // the coordinates, and the coordinates aren't on the same line as
+    // that start, move one part back.
+    if (index > 0) {
+      var ltr = part.level != 1;
+      var start = cursorCoords(cm, Pos(lineNo$$1, ltr ? part.from : part.to, ltr ? "after" : "before"),
+                               "line", lineObj, preparedMeasure);
+      if (boxIsAfter(start, x, y, true) && start.top > y)
+        { part = order[index - 1]; }
+    }
+    return part
+  }
+
+  function coordsBidiPartWrapped(cm, lineObj, _lineNo, preparedMeasure, order, x, y) {
+    // In a wrapped line, rtl text on wrapping boundaries can do things
+    // that don't correspond to the ordering in our `order` array at
+    // all, so a binary search doesn't work, and we want to return a
+    // part that only spans one line so that the binary search in
+    // coordsCharInner is safe. As such, we first find the extent of the
+    // wrapped line, and then do a flat search in which we discard any
+    // spans that aren't on the line.
+    var ref = wrappedLineExtent(cm, lineObj, preparedMeasure, y);
+    var begin = ref.begin;
+    var end = ref.end;
+    if (/\s/.test(lineObj.text.charAt(end - 1))) { end--; }
+    var part = null, closestDist = null;
+    for (var i = 0; i < order.length; i++) {
+      var p = order[i];
+      if (p.from >= end || p.to <= begin) { continue }
+      var ltr = p.level != 1;
+      var endX = measureCharPrepared(cm, preparedMeasure, ltr ? Math.min(end, p.to) - 1 : Math.max(begin, p.from)).right;
+      // Weigh against spans ending before this, so that they are only
+      // picked if nothing ends after
+      var dist = endX < x ? x - endX + 1e9 : endX - x;
+      if (!part || closestDist > dist) {
+        part = p;
+        closestDist = dist;
+      }
+    }
+    if (!part) { part = order[order.length - 1]; }
+    // Clip the part to the wrapped line.
+    if (part.from < begin) { part = {from: begin, to: part.to, level: part.level}; }
+    if (part.to > end) { part = {from: part.from, to: end, level: part.level}; }
+    return part
+  }
+
+  var measureText;
+  // Compute the default text height.
+  function textHeight(display) {
+    if (display.cachedTextHeight != null) { return display.cachedTextHeight }
+    if (measureText == null) {
+      measureText = elt("pre", null, "CodeMirror-line-like");
+      // Measure a bunch of lines, for browsers that compute
+      // fractional heights.
+      for (var i = 0; i < 49; ++i) {
+        measureText.appendChild(document.createTextNode("x"));
+        measureText.appendChild(elt("br"));
+      }
+      measureText.appendChild(document.createTextNode("x"));
+    }
+    removeChildrenAndAdd(display.measure, measureText);
+    var height = measureText.offsetHeight / 50;
+    if (height > 3) { display.cachedTextHeight = height; }
+    removeChildren(display.measure);
+    return height || 1
+  }
+
+  // Compute the default character width.
+  function charWidth(display) {
+    if (display.cachedCharWidth != null) { return display.cachedCharWidth }
+    var anchor = elt("span", "xxxxxxxxxx");
+    var pre = elt("pre", [anchor], "CodeMirror-line-like");
+    removeChildrenAndAdd(display.measure, pre);
+    var rect = anchor.getBoundingClientRect(), width = (rect.right - rect.left) / 10;
+    if (width > 2) { display.cachedCharWidth = width; }
+    return width || 10
+  }
+
+  // Do a bulk-read of the DOM positions and sizes needed to draw the
+  // view, so that we don't interleave reading and writing to the DOM.
+  function getDimensions(cm) {
+    var d = cm.display, left = {}, width = {};
+    var gutterLeft = d.gutters.clientLeft;
+    for (var n = d.gutters.firstChild, i = 0; n; n = n.nextSibling, ++i) {
+      var id = cm.display.gutterSpecs[i].className;
+      left[id] = n.offsetLeft + n.clientLeft + gutterLeft;
+      width[id] = n.clientWidth;
+    }
+    return {fixedPos: compensateForHScroll(d),
+            gutterTotalWidth: d.gutters.offsetWidth,
+            gutterLeft: left,
+            gutterWidth: width,
+            wrapperWidth: d.wrapper.clientWidth}
+  }
+
+  // Computes display.scroller.scrollLeft + display.gutters.offsetWidth,
+  // but using getBoundingClientRect to get a sub-pixel-accurate
+  // result.
+  function compensateForHScroll(display) {
+    return display.scroller.getBoundingClientRect().left - display.sizer.getBoundingClientRect().left
+  }
+
+  // Returns a function that estimates the height of a line, to use as
+  // first approximation until the line becomes visible (and is thus
+  // properly measurable).
+  function estimateHeight(cm) {
+    var th = textHeight(cm.display), wrapping = cm.options.lineWrapping;
+    var perLine = wrapping && Math.max(5, cm.display.scroller.clientWidth / charWidth(cm.display) - 3);
+    return function (line) {
+      if (lineIsHidden(cm.doc, line)) { return 0 }
+
+      var widgetsHeight = 0;
+      if (line.widgets) { for (var i = 0; i < line.widgets.length; i++) {
+        if (line.widgets[i].height) { widgetsHeight += line.widgets[i].height; }
