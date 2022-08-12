@@ -3123,3 +3123,169 @@
     }
     display.viewTo = to;
   }
+
+  // Count the number of lines in the view whose DOM representation is
+  // out of date (or nonexistent).
+  function countDirtyView(cm) {
+    var view = cm.display.view, dirty = 0;
+    for (var i = 0; i < view.length; i++) {
+      var lineView = view[i];
+      if (!lineView.hidden && (!lineView.node || lineView.changes)) { ++dirty; }
+    }
+    return dirty
+  }
+
+  function updateSelection(cm) {
+    cm.display.input.showSelection(cm.display.input.prepareSelection());
+  }
+
+  function prepareSelection(cm, primary) {
+    if ( primary === void 0 ) primary = true;
+
+    var doc = cm.doc, result = {};
+    var curFragment = result.cursors = document.createDocumentFragment();
+    var selFragment = result.selection = document.createDocumentFragment();
+
+    for (var i = 0; i < doc.sel.ranges.length; i++) {
+      if (!primary && i == doc.sel.primIndex) { continue }
+      var range$$1 = doc.sel.ranges[i];
+      if (range$$1.from().line >= cm.display.viewTo || range$$1.to().line < cm.display.viewFrom) { continue }
+      var collapsed = range$$1.empty();
+      if (collapsed || cm.options.showCursorWhenSelecting)
+        { drawSelectionCursor(cm, range$$1.head, curFragment); }
+      if (!collapsed)
+        { drawSelectionRange(cm, range$$1, selFragment); }
+    }
+    return result
+  }
+
+  // Draws a cursor for the given range
+  function drawSelectionCursor(cm, head, output) {
+    var pos = cursorCoords(cm, head, "div", null, null, !cm.options.singleCursorHeightPerLine);
+
+    var cursor = output.appendChild(elt("div", "\u00a0", "CodeMirror-cursor"));
+    cursor.style.left = pos.left + "px";
+    cursor.style.top = pos.top + "px";
+    cursor.style.height = Math.max(0, pos.bottom - pos.top) * cm.options.cursorHeight + "px";
+
+    if (pos.other) {
+      // Secondary cursor, shown when on a 'jump' in bi-directional text
+      var otherCursor = output.appendChild(elt("div", "\u00a0", "CodeMirror-cursor CodeMirror-secondarycursor"));
+      otherCursor.style.display = "";
+      otherCursor.style.left = pos.other.left + "px";
+      otherCursor.style.top = pos.other.top + "px";
+      otherCursor.style.height = (pos.other.bottom - pos.other.top) * .85 + "px";
+    }
+  }
+
+  function cmpCoords(a, b) { return a.top - b.top || a.left - b.left }
+
+  // Draws the given range as a highlighted selection
+  function drawSelectionRange(cm, range$$1, output) {
+    var display = cm.display, doc = cm.doc;
+    var fragment = document.createDocumentFragment();
+    var padding = paddingH(cm.display), leftSide = padding.left;
+    var rightSide = Math.max(display.sizerWidth, displayWidth(cm) - display.sizer.offsetLeft) - padding.right;
+    var docLTR = doc.direction == "ltr";
+
+    function add(left, top, width, bottom) {
+      if (top < 0) { top = 0; }
+      top = Math.round(top);
+      bottom = Math.round(bottom);
+      fragment.appendChild(elt("div", null, "CodeMirror-selected", ("position: absolute; left: " + left + "px;\n                             top: " + top + "px; width: " + (width == null ? rightSide - left : width) + "px;\n                             height: " + (bottom - top) + "px")));
+    }
+
+    function drawForLine(line, fromArg, toArg) {
+      var lineObj = getLine(doc, line);
+      var lineLen = lineObj.text.length;
+      var start, end;
+      function coords(ch, bias) {
+        return charCoords(cm, Pos(line, ch), "div", lineObj, bias)
+      }
+
+      function wrapX(pos, dir, side) {
+        var extent = wrappedLineExtentChar(cm, lineObj, null, pos);
+        var prop = (dir == "ltr") == (side == "after") ? "left" : "right";
+        var ch = side == "after" ? extent.begin : extent.end - (/\s/.test(lineObj.text.charAt(extent.end - 1)) ? 2 : 1);
+        return coords(ch, prop)[prop]
+      }
+
+      var order = getOrder(lineObj, doc.direction);
+      iterateBidiSections(order, fromArg || 0, toArg == null ? lineLen : toArg, function (from, to, dir, i) {
+        var ltr = dir == "ltr";
+        var fromPos = coords(from, ltr ? "left" : "right");
+        var toPos = coords(to - 1, ltr ? "right" : "left");
+
+        var openStart = fromArg == null && from == 0, openEnd = toArg == null && to == lineLen;
+        var first = i == 0, last = !order || i == order.length - 1;
+        if (toPos.top - fromPos.top <= 3) { // Single line
+          var openLeft = (docLTR ? openStart : openEnd) && first;
+          var openRight = (docLTR ? openEnd : openStart) && last;
+          var left = openLeft ? leftSide : (ltr ? fromPos : toPos).left;
+          var right = openRight ? rightSide : (ltr ? toPos : fromPos).right;
+          add(left, fromPos.top, right - left, fromPos.bottom);
+        } else { // Multiple lines
+          var topLeft, topRight, botLeft, botRight;
+          if (ltr) {
+            topLeft = docLTR && openStart && first ? leftSide : fromPos.left;
+            topRight = docLTR ? rightSide : wrapX(from, dir, "before");
+            botLeft = docLTR ? leftSide : wrapX(to, dir, "after");
+            botRight = docLTR && openEnd && last ? rightSide : toPos.right;
+          } else {
+            topLeft = !docLTR ? leftSide : wrapX(from, dir, "before");
+            topRight = !docLTR && openStart && first ? rightSide : fromPos.right;
+            botLeft = !docLTR && openEnd && last ? leftSide : toPos.left;
+            botRight = !docLTR ? rightSide : wrapX(to, dir, "after");
+          }
+          add(topLeft, fromPos.top, topRight - topLeft, fromPos.bottom);
+          if (fromPos.bottom < toPos.top) { add(leftSide, fromPos.bottom, null, toPos.top); }
+          add(botLeft, toPos.top, botRight - botLeft, toPos.bottom);
+        }
+
+        if (!start || cmpCoords(fromPos, start) < 0) { start = fromPos; }
+        if (cmpCoords(toPos, start) < 0) { start = toPos; }
+        if (!end || cmpCoords(fromPos, end) < 0) { end = fromPos; }
+        if (cmpCoords(toPos, end) < 0) { end = toPos; }
+      });
+      return {start: start, end: end}
+    }
+
+    var sFrom = range$$1.from(), sTo = range$$1.to();
+    if (sFrom.line == sTo.line) {
+      drawForLine(sFrom.line, sFrom.ch, sTo.ch);
+    } else {
+      var fromLine = getLine(doc, sFrom.line), toLine = getLine(doc, sTo.line);
+      var singleVLine = visualLine(fromLine) == visualLine(toLine);
+      var leftEnd = drawForLine(sFrom.line, sFrom.ch, singleVLine ? fromLine.text.length + 1 : null).end;
+      var rightStart = drawForLine(sTo.line, singleVLine ? 0 : null, sTo.ch).start;
+      if (singleVLine) {
+        if (leftEnd.top < rightStart.top - 2) {
+          add(leftEnd.right, leftEnd.top, null, leftEnd.bottom);
+          add(leftSide, rightStart.top, rightStart.left, rightStart.bottom);
+        } else {
+          add(leftEnd.right, leftEnd.top, rightStart.left - leftEnd.right, leftEnd.bottom);
+        }
+      }
+      if (leftEnd.bottom < rightStart.top)
+        { add(leftSide, leftEnd.bottom, null, rightStart.top); }
+    }
+
+    output.appendChild(fragment);
+  }
+
+  // Cursor-blinking
+  function restartBlink(cm) {
+    if (!cm.state.focused) { return }
+    var display = cm.display;
+    clearInterval(display.blinker);
+    var on = true;
+    display.cursorDiv.style.visibility = "";
+    if (cm.options.cursorBlinkRate > 0)
+      { display.blinker = setInterval(function () { return display.cursorDiv.style.visibility = (on = !on) ? "" : "hidden"; },
+        cm.options.cursorBlinkRate); }
+    else if (cm.options.cursorBlinkRate < 0)
+      { display.cursorDiv.style.visibility = "hidden"; }
+  }
+
+  function ensureFocus(cm) {
+    if (!cm.state.focused) { cm.display.input.focus(); onFocus(cm); }
