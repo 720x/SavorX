@@ -3468,3 +3468,174 @@
   // scrollLeft properties. When these are undefined, the
   // vertical/horizontal position does not need to be adjusted.
   function calculateScrollPos(cm, rect) {
+    var display = cm.display, snapMargin = textHeight(cm.display);
+    if (rect.top < 0) { rect.top = 0; }
+    var screentop = cm.curOp && cm.curOp.scrollTop != null ? cm.curOp.scrollTop : display.scroller.scrollTop;
+    var screen = displayHeight(cm), result = {};
+    if (rect.bottom - rect.top > screen) { rect.bottom = rect.top + screen; }
+    var docBottom = cm.doc.height + paddingVert(display);
+    var atTop = rect.top < snapMargin, atBottom = rect.bottom > docBottom - snapMargin;
+    if (rect.top < screentop) {
+      result.scrollTop = atTop ? 0 : rect.top;
+    } else if (rect.bottom > screentop + screen) {
+      var newTop = Math.min(rect.top, (atBottom ? docBottom : rect.bottom) - screen);
+      if (newTop != screentop) { result.scrollTop = newTop; }
+    }
+
+    var screenleft = cm.curOp && cm.curOp.scrollLeft != null ? cm.curOp.scrollLeft : display.scroller.scrollLeft;
+    var screenw = displayWidth(cm) - (cm.options.fixedGutter ? display.gutters.offsetWidth : 0);
+    var tooWide = rect.right - rect.left > screenw;
+    if (tooWide) { rect.right = rect.left + screenw; }
+    if (rect.left < 10)
+      { result.scrollLeft = 0; }
+    else if (rect.left < screenleft)
+      { result.scrollLeft = Math.max(0, rect.left - (tooWide ? 0 : 10)); }
+    else if (rect.right > screenw + screenleft - 3)
+      { result.scrollLeft = rect.right + (tooWide ? 0 : 10) - screenw; }
+    return result
+  }
+
+  // Store a relative adjustment to the scroll position in the current
+  // operation (to be applied when the operation finishes).
+  function addToScrollTop(cm, top) {
+    if (top == null) { return }
+    resolveScrollToPos(cm);
+    cm.curOp.scrollTop = (cm.curOp.scrollTop == null ? cm.doc.scrollTop : cm.curOp.scrollTop) + top;
+  }
+
+  // Make sure that at the end of the operation the current cursor is
+  // shown.
+  function ensureCursorVisible(cm) {
+    resolveScrollToPos(cm);
+    var cur = cm.getCursor();
+    cm.curOp.scrollToPos = {from: cur, to: cur, margin: cm.options.cursorScrollMargin};
+  }
+
+  function scrollToCoords(cm, x, y) {
+    if (x != null || y != null) { resolveScrollToPos(cm); }
+    if (x != null) { cm.curOp.scrollLeft = x; }
+    if (y != null) { cm.curOp.scrollTop = y; }
+  }
+
+  function scrollToRange(cm, range$$1) {
+    resolveScrollToPos(cm);
+    cm.curOp.scrollToPos = range$$1;
+  }
+
+  // When an operation has its scrollToPos property set, and another
+  // scroll action is applied before the end of the operation, this
+  // 'simulates' scrolling that position into view in a cheap way, so
+  // that the effect of intermediate scroll commands is not ignored.
+  function resolveScrollToPos(cm) {
+    var range$$1 = cm.curOp.scrollToPos;
+    if (range$$1) {
+      cm.curOp.scrollToPos = null;
+      var from = estimateCoords(cm, range$$1.from), to = estimateCoords(cm, range$$1.to);
+      scrollToCoordsRange(cm, from, to, range$$1.margin);
+    }
+  }
+
+  function scrollToCoordsRange(cm, from, to, margin) {
+    var sPos = calculateScrollPos(cm, {
+      left: Math.min(from.left, to.left),
+      top: Math.min(from.top, to.top) - margin,
+      right: Math.max(from.right, to.right),
+      bottom: Math.max(from.bottom, to.bottom) + margin
+    });
+    scrollToCoords(cm, sPos.scrollLeft, sPos.scrollTop);
+  }
+
+  // Sync the scrollable area and scrollbars, ensure the viewport
+  // covers the visible area.
+  function updateScrollTop(cm, val) {
+    if (Math.abs(cm.doc.scrollTop - val) < 2) { return }
+    if (!gecko) { updateDisplaySimple(cm, {top: val}); }
+    setScrollTop(cm, val, true);
+    if (gecko) { updateDisplaySimple(cm); }
+    startWorker(cm, 100);
+  }
+
+  function setScrollTop(cm, val, forceScroll) {
+    val = Math.max(0, Math.min(cm.display.scroller.scrollHeight - cm.display.scroller.clientHeight, val));
+    if (cm.display.scroller.scrollTop == val && !forceScroll) { return }
+    cm.doc.scrollTop = val;
+    cm.display.scrollbars.setScrollTop(val);
+    if (cm.display.scroller.scrollTop != val) { cm.display.scroller.scrollTop = val; }
+  }
+
+  // Sync scroller and scrollbar, ensure the gutter elements are
+  // aligned.
+  function setScrollLeft(cm, val, isScroller, forceScroll) {
+    val = Math.max(0, Math.min(val, cm.display.scroller.scrollWidth - cm.display.scroller.clientWidth));
+    if ((isScroller ? val == cm.doc.scrollLeft : Math.abs(cm.doc.scrollLeft - val) < 2) && !forceScroll) { return }
+    cm.doc.scrollLeft = val;
+    alignHorizontally(cm);
+    if (cm.display.scroller.scrollLeft != val) { cm.display.scroller.scrollLeft = val; }
+    cm.display.scrollbars.setScrollLeft(val);
+  }
+
+  // SCROLLBARS
+
+  // Prepare DOM reads needed to update the scrollbars. Done in one
+  // shot to minimize update/measure roundtrips.
+  function measureForScrollbars(cm) {
+    var d = cm.display, gutterW = d.gutters.offsetWidth;
+    var docH = Math.round(cm.doc.height + paddingVert(cm.display));
+    return {
+      clientHeight: d.scroller.clientHeight,
+      viewHeight: d.wrapper.clientHeight,
+      scrollWidth: d.scroller.scrollWidth, clientWidth: d.scroller.clientWidth,
+      viewWidth: d.wrapper.clientWidth,
+      barLeft: cm.options.fixedGutter ? gutterW : 0,
+      docHeight: docH,
+      scrollHeight: docH + scrollGap(cm) + d.barHeight,
+      nativeBarWidth: d.nativeBarWidth,
+      gutterWidth: gutterW
+    }
+  }
+
+  var NativeScrollbars = function(place, scroll, cm) {
+    this.cm = cm;
+    var vert = this.vert = elt("div", [elt("div", null, null, "min-width: 1px")], "CodeMirror-vscrollbar");
+    var horiz = this.horiz = elt("div", [elt("div", null, null, "height: 100%; min-height: 1px")], "CodeMirror-hscrollbar");
+    vert.tabIndex = horiz.tabIndex = -1;
+    place(vert); place(horiz);
+
+    on(vert, "scroll", function () {
+      if (vert.clientHeight) { scroll(vert.scrollTop, "vertical"); }
+    });
+    on(horiz, "scroll", function () {
+      if (horiz.clientWidth) { scroll(horiz.scrollLeft, "horizontal"); }
+    });
+
+    this.checkedZeroWidth = false;
+    // Need to set a minimum width to see the scrollbar on IE7 (but must not set it on IE8).
+    if (ie && ie_version < 8) { this.horiz.style.minHeight = this.vert.style.minWidth = "18px"; }
+  };
+
+  NativeScrollbars.prototype.update = function (measure) {
+    var needsH = measure.scrollWidth > measure.clientWidth + 1;
+    var needsV = measure.scrollHeight > measure.clientHeight + 1;
+    var sWidth = measure.nativeBarWidth;
+
+    if (needsV) {
+      this.vert.style.display = "block";
+      this.vert.style.bottom = needsH ? sWidth + "px" : "0";
+      var totalHeight = measure.viewHeight - (needsH ? sWidth : 0);
+      // A bug in IE8 can cause this value to be negative, so guard it.
+      this.vert.firstChild.style.height =
+        Math.max(0, measure.scrollHeight - measure.clientHeight + totalHeight) + "px";
+    } else {
+      this.vert.style.display = "";
+      this.vert.firstChild.style.height = "0";
+    }
+
+    if (needsH) {
+      this.horiz.style.display = "block";
+      this.horiz.style.right = needsV ? sWidth + "px" : "0";
+      this.horiz.style.left = measure.barLeft + "px";
+      var totalWidth = measure.viewWidth - measure.barLeft - (needsV ? sWidth : 0);
+      this.horiz.firstChild.style.width =
+        Math.max(0, measure.scrollWidth - measure.clientWidth + totalWidth) + "px";
+    } else {
+      this.horiz.style.display = "";
