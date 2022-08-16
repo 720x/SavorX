@@ -4938,3 +4938,195 @@
   function pushSelectionToHistory(sel, dest) {
     var top = lst(dest);
     if (!(top && top.ranges && top.equals(sel)))
+      { dest.push(sel); }
+  }
+
+  // Used to store marked span information in the history.
+  function attachLocalSpans(doc, change, from, to) {
+    var existing = change["spans_" + doc.id], n = 0;
+    doc.iter(Math.max(doc.first, from), Math.min(doc.first + doc.size, to), function (line) {
+      if (line.markedSpans)
+        { (existing || (existing = change["spans_" + doc.id] = {}))[n] = line.markedSpans; }
+      ++n;
+    });
+  }
+
+  // When un/re-doing restores text containing marked spans, those
+  // that have been explicitly cleared should not be restored.
+  function removeClearedSpans(spans) {
+    if (!spans) { return null }
+    var out;
+    for (var i = 0; i < spans.length; ++i) {
+      if (spans[i].marker.explicitlyCleared) { if (!out) { out = spans.slice(0, i); } }
+      else if (out) { out.push(spans[i]); }
+    }
+    return !out ? spans : out.length ? out : null
+  }
+
+  // Retrieve and filter the old marked spans stored in a change event.
+  function getOldSpans(doc, change) {
+    var found = change["spans_" + doc.id];
+    if (!found) { return null }
+    var nw = [];
+    for (var i = 0; i < change.text.length; ++i)
+      { nw.push(removeClearedSpans(found[i])); }
+    return nw
+  }
+
+  // Used for un/re-doing changes from the history. Combines the
+  // result of computing the existing spans with the set of spans that
+  // existed in the history (so that deleting around a span and then
+  // undoing brings back the span).
+  function mergeOldSpans(doc, change) {
+    var old = getOldSpans(doc, change);
+    var stretched = stretchSpansOverChange(doc, change);
+    if (!old) { return stretched }
+    if (!stretched) { return old }
+
+    for (var i = 0; i < old.length; ++i) {
+      var oldCur = old[i], stretchCur = stretched[i];
+      if (oldCur && stretchCur) {
+        spans: for (var j = 0; j < stretchCur.length; ++j) {
+          var span = stretchCur[j];
+          for (var k = 0; k < oldCur.length; ++k)
+            { if (oldCur[k].marker == span.marker) { continue spans } }
+          oldCur.push(span);
+        }
+      } else if (stretchCur) {
+        old[i] = stretchCur;
+      }
+    }
+    return old
+  }
+
+  // Used both to provide a JSON-safe object in .getHistory, and, when
+  // detaching a document, to split the history in two
+  function copyHistoryArray(events, newGroup, instantiateSel) {
+    var copy = [];
+    for (var i = 0; i < events.length; ++i) {
+      var event = events[i];
+      if (event.ranges) {
+        copy.push(instantiateSel ? Selection.prototype.deepCopy.call(event) : event);
+        continue
+      }
+      var changes = event.changes, newChanges = [];
+      copy.push({changes: newChanges});
+      for (var j = 0; j < changes.length; ++j) {
+        var change = changes[j], m = (void 0);
+        newChanges.push({from: change.from, to: change.to, text: change.text});
+        if (newGroup) { for (var prop in change) { if (m = prop.match(/^spans_(\d+)$/)) {
+          if (indexOf(newGroup, Number(m[1])) > -1) {
+            lst(newChanges)[prop] = change[prop];
+            delete change[prop];
+          }
+        } } }
+      }
+    }
+    return copy
+  }
+
+  // The 'scroll' parameter given to many of these indicated whether
+  // the new cursor position should be scrolled into view after
+  // modifying the selection.
+
+  // If shift is held or the extend flag is set, extends a range to
+  // include a given position (and optionally a second position).
+  // Otherwise, simply returns the range between the given positions.
+  // Used for cursor motion and such.
+  function extendRange(range, head, other, extend) {
+    if (extend) {
+      var anchor = range.anchor;
+      if (other) {
+        var posBefore = cmp(head, anchor) < 0;
+        if (posBefore != (cmp(other, anchor) < 0)) {
+          anchor = head;
+          head = other;
+        } else if (posBefore != (cmp(head, other) < 0)) {
+          head = other;
+        }
+      }
+      return new Range(anchor, head)
+    } else {
+      return new Range(other || head, head)
+    }
+  }
+
+  // Extend the primary selection range, discard the rest.
+  function extendSelection(doc, head, other, options, extend) {
+    if (extend == null) { extend = doc.cm && (doc.cm.display.shift || doc.extend); }
+    setSelection(doc, new Selection([extendRange(doc.sel.primary(), head, other, extend)], 0), options);
+  }
+
+  // Extend all selections (pos is an array of selections with length
+  // equal the number of selections)
+  function extendSelections(doc, heads, options) {
+    var out = [];
+    var extend = doc.cm && (doc.cm.display.shift || doc.extend);
+    for (var i = 0; i < doc.sel.ranges.length; i++)
+      { out[i] = extendRange(doc.sel.ranges[i], heads[i], null, extend); }
+    var newSel = normalizeSelection(doc.cm, out, doc.sel.primIndex);
+    setSelection(doc, newSel, options);
+  }
+
+  // Updates a single range in the selection.
+  function replaceOneSelection(doc, i, range, options) {
+    var ranges = doc.sel.ranges.slice(0);
+    ranges[i] = range;
+    setSelection(doc, normalizeSelection(doc.cm, ranges, doc.sel.primIndex), options);
+  }
+
+  // Reset the selection to a single range.
+  function setSimpleSelection(doc, anchor, head, options) {
+    setSelection(doc, simpleSelection(anchor, head), options);
+  }
+
+  // Give beforeSelectionChange handlers a change to influence a
+  // selection update.
+  function filterSelectionChange(doc, sel, options) {
+    var obj = {
+      ranges: sel.ranges,
+      update: function(ranges) {
+        var this$1 = this;
+
+        this.ranges = [];
+        for (var i = 0; i < ranges.length; i++)
+          { this$1.ranges[i] = new Range(clipPos(doc, ranges[i].anchor),
+                                     clipPos(doc, ranges[i].head)); }
+      },
+      origin: options && options.origin
+    };
+    signal(doc, "beforeSelectionChange", doc, obj);
+    if (doc.cm) { signal(doc.cm, "beforeSelectionChange", doc.cm, obj); }
+    if (obj.ranges != sel.ranges) { return normalizeSelection(doc.cm, obj.ranges, obj.ranges.length - 1) }
+    else { return sel }
+  }
+
+  function setSelectionReplaceHistory(doc, sel, options) {
+    var done = doc.history.done, last = lst(done);
+    if (last && last.ranges) {
+      done[done.length - 1] = sel;
+      setSelectionNoUndo(doc, sel, options);
+    } else {
+      setSelection(doc, sel, options);
+    }
+  }
+
+  // Set a new selection.
+  function setSelection(doc, sel, options) {
+    setSelectionNoUndo(doc, sel, options);
+    addSelectionToHistory(doc, doc.sel, doc.cm ? doc.cm.curOp.id : NaN, options);
+  }
+
+  function setSelectionNoUndo(doc, sel, options) {
+    if (hasHandler(doc, "beforeSelectionChange") || doc.cm && hasHandler(doc.cm, "beforeSelectionChange"))
+      { sel = filterSelectionChange(doc, sel, options); }
+
+    var bias = options && options.bias ||
+      (cmp(sel.primary().head, doc.sel.primary().head) < 0 ? -1 : 1);
+    setSelectionInner(doc, skipAtomicInSelection(doc, sel, bias, true));
+
+    if (!(options && options.scroll === false) && doc.cm)
+      { ensureCursorVisible(doc.cm); }
+  }
+
+  function setSelectionInner(doc, sel) {
