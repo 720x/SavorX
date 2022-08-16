@@ -4371,3 +4371,195 @@
     // Actual scrollable element.
     d.scroller = elt("div", [d.sizer, d.heightForcer, d.gutters], "CodeMirror-scroll");
     d.scroller.setAttribute("tabIndex", "-1");
+    // The element in which the editor lives.
+    d.wrapper = elt("div", [d.scrollbarFiller, d.gutterFiller, d.scroller], "CodeMirror");
+
+    // Work around IE7 z-index bug (not perfect, hence IE7 not really being supported)
+    if (ie && ie_version < 8) { d.gutters.style.zIndex = -1; d.scroller.style.paddingRight = 0; }
+    if (!webkit && !(gecko && mobile)) { d.scroller.draggable = true; }
+
+    if (place) {
+      if (place.appendChild) { place.appendChild(d.wrapper); }
+      else { place(d.wrapper); }
+    }
+
+    // Current rendered range (may be bigger than the view window).
+    d.viewFrom = d.viewTo = doc.first;
+    d.reportedViewFrom = d.reportedViewTo = doc.first;
+    // Information about the rendered lines.
+    d.view = [];
+    d.renderedView = null;
+    // Holds info about a single rendered line when it was rendered
+    // for measurement, while not in view.
+    d.externalMeasured = null;
+    // Empty space (in pixels) above the view
+    d.viewOffset = 0;
+    d.lastWrapHeight = d.lastWrapWidth = 0;
+    d.updateLineNumbers = null;
+
+    d.nativeBarWidth = d.barHeight = d.barWidth = 0;
+    d.scrollbarsClipped = false;
+
+    // Used to only resize the line number gutter when necessary (when
+    // the amount of lines crosses a boundary that makes its width change)
+    d.lineNumWidth = d.lineNumInnerWidth = d.lineNumChars = null;
+    // Set to true when a non-horizontal-scrolling line widget is
+    // added. As an optimization, line widget aligning is skipped when
+    // this is false.
+    d.alignWidgets = false;
+
+    d.cachedCharWidth = d.cachedTextHeight = d.cachedPaddingH = null;
+
+    // Tracks the maximum line length so that the horizontal scrollbar
+    // can be kept static when scrolling.
+    d.maxLine = null;
+    d.maxLineLength = 0;
+    d.maxLineChanged = false;
+
+    // Used for measuring wheel scrolling granularity
+    d.wheelDX = d.wheelDY = d.wheelStartX = d.wheelStartY = null;
+
+    // True when shift is held down.
+    d.shift = false;
+
+    // Used to track whether anything happened since the context menu
+    // was opened.
+    d.selForContextMenu = null;
+
+    d.activeTouch = null;
+
+    d.gutterSpecs = getGutters(options.gutters, options.lineNumbers);
+    renderGutters(d);
+
+    input.init(d);
+  }
+
+  // Since the delta values reported on mouse wheel events are
+  // unstandardized between browsers and even browser versions, and
+  // generally horribly unpredictable, this code starts by measuring
+  // the scroll effect that the first few mouse wheel events have,
+  // and, from that, detects the way it can convert deltas to pixel
+  // offsets afterwards.
+  //
+  // The reason we want to know the amount a wheel event will scroll
+  // is that it gives us a chance to update the display before the
+  // actual scrolling happens, reducing flickering.
+
+  var wheelSamples = 0, wheelPixelsPerUnit = null;
+  // Fill in a browser-detected starting value on browsers where we
+  // know one. These don't have to be accurate -- the result of them
+  // being wrong would just be a slight flicker on the first wheel
+  // scroll (if it is large enough).
+  if (ie) { wheelPixelsPerUnit = -.53; }
+  else if (gecko) { wheelPixelsPerUnit = 15; }
+  else if (chrome) { wheelPixelsPerUnit = -.7; }
+  else if (safari) { wheelPixelsPerUnit = -1/3; }
+
+  function wheelEventDelta(e) {
+    var dx = e.wheelDeltaX, dy = e.wheelDeltaY;
+    if (dx == null && e.detail && e.axis == e.HORIZONTAL_AXIS) { dx = e.detail; }
+    if (dy == null && e.detail && e.axis == e.VERTICAL_AXIS) { dy = e.detail; }
+    else if (dy == null) { dy = e.wheelDelta; }
+    return {x: dx, y: dy}
+  }
+  function wheelEventPixels(e) {
+    var delta = wheelEventDelta(e);
+    delta.x *= wheelPixelsPerUnit;
+    delta.y *= wheelPixelsPerUnit;
+    return delta
+  }
+
+  function onScrollWheel(cm, e) {
+    var delta = wheelEventDelta(e), dx = delta.x, dy = delta.y;
+
+    var display = cm.display, scroll = display.scroller;
+    // Quit if there's nothing to scroll here
+    var canScrollX = scroll.scrollWidth > scroll.clientWidth;
+    var canScrollY = scroll.scrollHeight > scroll.clientHeight;
+    if (!(dx && canScrollX || dy && canScrollY)) { return }
+
+    // Webkit browsers on OS X abort momentum scrolls when the target
+    // of the scroll event is removed from the scrollable element.
+    // This hack (see related code in patchDisplay) makes sure the
+    // element is kept around.
+    if (dy && mac && webkit) {
+      outer: for (var cur = e.target, view = display.view; cur != scroll; cur = cur.parentNode) {
+        for (var i = 0; i < view.length; i++) {
+          if (view[i].node == cur) {
+            cm.display.currentWheelTarget = cur;
+            break outer
+          }
+        }
+      }
+    }
+
+    // On some browsers, horizontal scrolling will cause redraws to
+    // happen before the gutter has been realigned, causing it to
+    // wriggle around in a most unseemly way. When we have an
+    // estimated pixels/delta value, we just handle horizontal
+    // scrolling entirely here. It'll be slightly off from native, but
+    // better than glitching out.
+    if (dx && !gecko && !presto && wheelPixelsPerUnit != null) {
+      if (dy && canScrollY)
+        { updateScrollTop(cm, Math.max(0, scroll.scrollTop + dy * wheelPixelsPerUnit)); }
+      setScrollLeft(cm, Math.max(0, scroll.scrollLeft + dx * wheelPixelsPerUnit));
+      // Only prevent default scrolling if vertical scrolling is
+      // actually possible. Otherwise, it causes vertical scroll
+      // jitter on OSX trackpads when deltaX is small and deltaY
+      // is large (issue #3579)
+      if (!dy || (dy && canScrollY))
+        { e_preventDefault(e); }
+      display.wheelStartX = null; // Abort measurement, if in progress
+      return
+    }
+
+    // 'Project' the visible viewport to cover the area that is being
+    // scrolled into view (if we know enough to estimate it).
+    if (dy && wheelPixelsPerUnit != null) {
+      var pixels = dy * wheelPixelsPerUnit;
+      var top = cm.doc.scrollTop, bot = top + display.wrapper.clientHeight;
+      if (pixels < 0) { top = Math.max(0, top + pixels - 50); }
+      else { bot = Math.min(cm.doc.height, bot + pixels + 50); }
+      updateDisplaySimple(cm, {top: top, bottom: bot});
+    }
+
+    if (wheelSamples < 20) {
+      if (display.wheelStartX == null) {
+        display.wheelStartX = scroll.scrollLeft; display.wheelStartY = scroll.scrollTop;
+        display.wheelDX = dx; display.wheelDY = dy;
+        setTimeout(function () {
+          if (display.wheelStartX == null) { return }
+          var movedX = scroll.scrollLeft - display.wheelStartX;
+          var movedY = scroll.scrollTop - display.wheelStartY;
+          var sample = (movedY && display.wheelDY && movedY / display.wheelDY) ||
+            (movedX && display.wheelDX && movedX / display.wheelDX);
+          display.wheelStartX = display.wheelStartY = null;
+          if (!sample) { return }
+          wheelPixelsPerUnit = (wheelPixelsPerUnit * wheelSamples + sample) / (wheelSamples + 1);
+          ++wheelSamples;
+        }, 200);
+      } else {
+        display.wheelDX += dx; display.wheelDY += dy;
+      }
+    }
+  }
+
+  // Selection objects are immutable. A new one is created every time
+  // the selection changes. A selection is one or more non-overlapping
+  // (and non-touching) ranges, sorted, and an integer that indicates
+  // which one is the primary selection (the one that's scrolled into
+  // view, that getCursor returns, etc).
+  var Selection = function(ranges, primIndex) {
+    this.ranges = ranges;
+    this.primIndex = primIndex;
+  };
+
+  Selection.prototype.primary = function () { return this.ranges[this.primIndex] };
+
+  Selection.prototype.equals = function (other) {
+      var this$1 = this;
+
+    if (other == this) { return true }
+    if (other.primIndex != this.primIndex || other.ranges.length != this.ranges.length) { return false }
+    for (var i = 0; i < this.ranges.length; i++) {
+      var here = this$1.ranges[i], there = other.ranges[i];
