@@ -6439,3 +6439,178 @@
       });
       return markers
     },
+
+    posFromIndex: function(off) {
+      var ch, lineNo$$1 = this.first, sepSize = this.lineSeparator().length;
+      this.iter(function (line) {
+        var sz = line.text.length + sepSize;
+        if (sz > off) { ch = off; return true }
+        off -= sz;
+        ++lineNo$$1;
+      });
+      return clipPos(this, Pos(lineNo$$1, ch))
+    },
+    indexFromPos: function (coords) {
+      coords = clipPos(this, coords);
+      var index = coords.ch;
+      if (coords.line < this.first || coords.ch < 0) { return 0 }
+      var sepSize = this.lineSeparator().length;
+      this.iter(this.first, coords.line, function (line) { // iter aborts when callback returns a truthy value
+        index += line.text.length + sepSize;
+      });
+      return index
+    },
+
+    copy: function(copyHistory) {
+      var doc = new Doc(getLines(this, this.first, this.first + this.size),
+                        this.modeOption, this.first, this.lineSep, this.direction);
+      doc.scrollTop = this.scrollTop; doc.scrollLeft = this.scrollLeft;
+      doc.sel = this.sel;
+      doc.extend = false;
+      if (copyHistory) {
+        doc.history.undoDepth = this.history.undoDepth;
+        doc.setHistory(this.getHistory());
+      }
+      return doc
+    },
+
+    linkedDoc: function(options) {
+      if (!options) { options = {}; }
+      var from = this.first, to = this.first + this.size;
+      if (options.from != null && options.from > from) { from = options.from; }
+      if (options.to != null && options.to < to) { to = options.to; }
+      var copy = new Doc(getLines(this, from, to), options.mode || this.modeOption, from, this.lineSep, this.direction);
+      if (options.sharedHist) { copy.history = this.history
+      ; }(this.linked || (this.linked = [])).push({doc: copy, sharedHist: options.sharedHist});
+      copy.linked = [{doc: this, isParent: true, sharedHist: options.sharedHist}];
+      copySharedMarkers(copy, findSharedMarkers(this));
+      return copy
+    },
+    unlinkDoc: function(other) {
+      var this$1 = this;
+
+      if (other instanceof CodeMirror) { other = other.doc; }
+      if (this.linked) { for (var i = 0; i < this.linked.length; ++i) {
+        var link = this$1.linked[i];
+        if (link.doc != other) { continue }
+        this$1.linked.splice(i, 1);
+        other.unlinkDoc(this$1);
+        detachSharedMarkers(findSharedMarkers(this$1));
+        break
+      } }
+      // If the histories were shared, split them again
+      if (other.history == this.history) {
+        var splitIds = [other.id];
+        linkedDocs(other, function (doc) { return splitIds.push(doc.id); }, true);
+        other.history = new History(null);
+        other.history.done = copyHistoryArray(this.history.done, splitIds);
+        other.history.undone = copyHistoryArray(this.history.undone, splitIds);
+      }
+    },
+    iterLinkedDocs: function(f) {linkedDocs(this, f);},
+
+    getMode: function() {return this.mode},
+    getEditor: function() {return this.cm},
+
+    splitLines: function(str) {
+      if (this.lineSep) { return str.split(this.lineSep) }
+      return splitLinesAuto(str)
+    },
+    lineSeparator: function() { return this.lineSep || "\n" },
+
+    setDirection: docMethodOp(function (dir) {
+      if (dir != "rtl") { dir = "ltr"; }
+      if (dir == this.direction) { return }
+      this.direction = dir;
+      this.iter(function (line) { return line.order = null; });
+      if (this.cm) { directionChanged(this.cm); }
+    })
+  });
+
+  // Public alias.
+  Doc.prototype.eachLine = Doc.prototype.iter;
+
+  // Kludge to work around strange IE behavior where it'll sometimes
+  // re-fire a series of drag-related events right after the drop (#1551)
+  var lastDrop = 0;
+
+  function onDrop(e) {
+    var cm = this;
+    clearDragCursor(cm);
+    if (signalDOMEvent(cm, e) || eventInWidget(cm.display, e))
+      { return }
+    e_preventDefault(e);
+    if (ie) { lastDrop = +new Date; }
+    var pos = posFromMouse(cm, e, true), files = e.dataTransfer.files;
+    if (!pos || cm.isReadOnly()) { return }
+    // Might be a file drop, in which case we simply extract the text
+    // and insert it.
+    if (files && files.length && window.FileReader && window.File) {
+      var n = files.length, text = Array(n), read = 0;
+      var markAsReadAndPasteIfAllFilesAreRead = function () {
+        if (++read == n) {
+          operation(cm, function () {
+            pos = clipPos(cm.doc, pos);
+            var change = {from: pos, to: pos,
+                          text: cm.doc.splitLines(
+                              text.filter(function (t) { return t != null; }).join(cm.doc.lineSeparator())),
+                          origin: "paste"};
+            makeChange(cm.doc, change);
+            setSelectionReplaceHistory(cm.doc, simpleSelection(clipPos(cm.doc, pos), clipPos(cm.doc, changeEnd(change))));
+          })();
+        }
+      };
+      var readTextFromFile = function (file, i) {
+        if (cm.options.allowDropFileTypes &&
+            indexOf(cm.options.allowDropFileTypes, file.type) == -1) {
+          markAsReadAndPasteIfAllFilesAreRead();
+          return
+        }
+        var reader = new FileReader;
+        reader.onerror = function () { return markAsReadAndPasteIfAllFilesAreRead(); };
+        reader.onload = function () {
+          var content = reader.result;
+          if (/[\x00-\x08\x0e-\x1f]{2}/.test(content)) {
+            markAsReadAndPasteIfAllFilesAreRead();
+            return
+          }
+          text[i] = content;
+          markAsReadAndPasteIfAllFilesAreRead();
+        };
+        reader.readAsText(file);
+      };
+      for (var i = 0; i < files.length; i++) { readTextFromFile(files[i], i); }
+    } else { // Normal drop
+      // Don't do a replace if the drop happened inside of the selected text.
+      if (cm.state.draggingText && cm.doc.sel.contains(pos) > -1) {
+        cm.state.draggingText(e);
+        // Ensure the editor is re-focused
+        setTimeout(function () { return cm.display.input.focus(); }, 20);
+        return
+      }
+      try {
+        var text$1 = e.dataTransfer.getData("Text");
+        if (text$1) {
+          var selected;
+          if (cm.state.draggingText && !cm.state.draggingText.copy)
+            { selected = cm.listSelections(); }
+          setSelectionNoUndo(cm.doc, simpleSelection(pos, pos));
+          if (selected) { for (var i$1 = 0; i$1 < selected.length; ++i$1)
+            { replaceRange(cm.doc, "", selected[i$1].anchor, selected[i$1].head, "drag"); } }
+          cm.replaceSelection(text$1, "around", "paste");
+          cm.display.input.focus();
+        }
+      }
+      catch(e){}
+    }
+  }
+
+  function onDragStart(cm, e) {
+    if (ie && (!cm.state.draggingText || +new Date - lastDrop < 100)) { e_stop(e); return }
+    if (signalDOMEvent(cm, e) || eventInWidget(cm.display, e)) { return }
+
+    e.dataTransfer.setData("Text", cm.getSelection());
+    e.dataTransfer.effectAllowed = "copyMove";
+
+    // Use dummy image instead of default browsers image.
+    // Recent Safari (~6.0.2) have a tendency to segfault when this happens, so we don't do it there.
