@@ -6790,3 +6790,166 @@
         if (i == keys.length - 1) {
           name = keys.join(" ");
           val = value;
+        } else {
+          name = keys.slice(0, i + 1).join(" ");
+          val = "...";
+        }
+        var prev = copy[name];
+        if (!prev) { copy[name] = val; }
+        else if (prev != val) { throw new Error("Inconsistent bindings for " + name) }
+      }
+      delete keymap[keyname];
+    } }
+    for (var prop in copy) { keymap[prop] = copy[prop]; }
+    return keymap
+  }
+
+  function lookupKey(key, map$$1, handle, context) {
+    map$$1 = getKeyMap(map$$1);
+    var found = map$$1.call ? map$$1.call(key, context) : map$$1[key];
+    if (found === false) { return "nothing" }
+    if (found === "...") { return "multi" }
+    if (found != null && handle(found)) { return "handled" }
+
+    if (map$$1.fallthrough) {
+      if (Object.prototype.toString.call(map$$1.fallthrough) != "[object Array]")
+        { return lookupKey(key, map$$1.fallthrough, handle, context) }
+      for (var i = 0; i < map$$1.fallthrough.length; i++) {
+        var result = lookupKey(key, map$$1.fallthrough[i], handle, context);
+        if (result) { return result }
+      }
+    }
+  }
+
+  // Modifier key presses don't count as 'real' key presses for the
+  // purpose of keymap fallthrough.
+  function isModifierKey(value) {
+    var name = typeof value == "string" ? value : keyNames[value.keyCode];
+    return name == "Ctrl" || name == "Alt" || name == "Shift" || name == "Mod"
+  }
+
+  function addModifierNames(name, event, noShift) {
+    var base = name;
+    if (event.altKey && base != "Alt") { name = "Alt-" + name; }
+    if ((flipCtrlCmd ? event.metaKey : event.ctrlKey) && base != "Ctrl") { name = "Ctrl-" + name; }
+    if ((flipCtrlCmd ? event.ctrlKey : event.metaKey) && base != "Cmd") { name = "Cmd-" + name; }
+    if (!noShift && event.shiftKey && base != "Shift") { name = "Shift-" + name; }
+    return name
+  }
+
+  // Look up the name of a key as indicated by an event object.
+  function keyName(event, noShift) {
+    if (presto && event.keyCode == 34 && event["char"]) { return false }
+    var name = keyNames[event.keyCode];
+    if (name == null || event.altGraphKey) { return false }
+    // Ctrl-ScrollLock has keyCode 3, same as Ctrl-Pause,
+    // so we'll use event.code when available (Chrome 48+, FF 38+, Safari 10.1+)
+    if (event.keyCode == 3 && event.code) { name = event.code; }
+    return addModifierNames(name, event, noShift)
+  }
+
+  function getKeyMap(val) {
+    return typeof val == "string" ? keyMap[val] : val
+  }
+
+  // Helper for deleting text near the selection(s), used to implement
+  // backspace, delete, and similar functionality.
+  function deleteNearSelection(cm, compute) {
+    var ranges = cm.doc.sel.ranges, kill = [];
+    // Build up a set of ranges to kill first, merging overlapping
+    // ranges.
+    for (var i = 0; i < ranges.length; i++) {
+      var toKill = compute(ranges[i]);
+      while (kill.length && cmp(toKill.from, lst(kill).to) <= 0) {
+        var replaced = kill.pop();
+        if (cmp(replaced.from, toKill.from) < 0) {
+          toKill.from = replaced.from;
+          break
+        }
+      }
+      kill.push(toKill);
+    }
+    // Next, remove those actual ranges.
+    runInOp(cm, function () {
+      for (var i = kill.length - 1; i >= 0; i--)
+        { replaceRange(cm.doc, "", kill[i].from, kill[i].to, "+delete"); }
+      ensureCursorVisible(cm);
+    });
+  }
+
+  function moveCharLogically(line, ch, dir) {
+    var target = skipExtendingChars(line.text, ch + dir, dir);
+    return target < 0 || target > line.text.length ? null : target
+  }
+
+  function moveLogically(line, start, dir) {
+    var ch = moveCharLogically(line, start.ch, dir);
+    return ch == null ? null : new Pos(start.line, ch, dir < 0 ? "after" : "before")
+  }
+
+  function endOfLine(visually, cm, lineObj, lineNo, dir) {
+    if (visually) {
+      if (cm.doc.direction == "rtl") { dir = -dir; }
+      var order = getOrder(lineObj, cm.doc.direction);
+      if (order) {
+        var part = dir < 0 ? lst(order) : order[0];
+        var moveInStorageOrder = (dir < 0) == (part.level == 1);
+        var sticky = moveInStorageOrder ? "after" : "before";
+        var ch;
+        // With a wrapped rtl chunk (possibly spanning multiple bidi parts),
+        // it could be that the last bidi part is not on the last visual line,
+        // since visual lines contain content order-consecutive chunks.
+        // Thus, in rtl, we are looking for the first (content-order) character
+        // in the rtl chunk that is on the last line (that is, the same line
+        // as the last (content-order) character).
+        if (part.level > 0 || cm.doc.direction == "rtl") {
+          var prep = prepareMeasureForLine(cm, lineObj);
+          ch = dir < 0 ? lineObj.text.length - 1 : 0;
+          var targetTop = measureCharPrepared(cm, prep, ch).top;
+          ch = findFirst(function (ch) { return measureCharPrepared(cm, prep, ch).top == targetTop; }, (dir < 0) == (part.level == 1) ? part.from : part.to - 1, ch);
+          if (sticky == "before") { ch = moveCharLogically(lineObj, ch, 1); }
+        } else { ch = dir < 0 ? part.to : part.from; }
+        return new Pos(lineNo, ch, sticky)
+      }
+    }
+    return new Pos(lineNo, dir < 0 ? lineObj.text.length : 0, dir < 0 ? "before" : "after")
+  }
+
+  function moveVisually(cm, line, start, dir) {
+    var bidi = getOrder(line, cm.doc.direction);
+    if (!bidi) { return moveLogically(line, start, dir) }
+    if (start.ch >= line.text.length) {
+      start.ch = line.text.length;
+      start.sticky = "before";
+    } else if (start.ch <= 0) {
+      start.ch = 0;
+      start.sticky = "after";
+    }
+    var partPos = getBidiPartAt(bidi, start.ch, start.sticky), part = bidi[partPos];
+    if (cm.doc.direction == "ltr" && part.level % 2 == 0 && (dir > 0 ? part.to > start.ch : part.from < start.ch)) {
+      // Case 1: We move within an ltr part in an ltr editor. Even with wrapped lines,
+      // nothing interesting happens.
+      return moveLogically(line, start, dir)
+    }
+
+    var mv = function (pos, dir) { return moveCharLogically(line, pos instanceof Pos ? pos.ch : pos, dir); };
+    var prep;
+    var getWrappedLineExtent = function (ch) {
+      if (!cm.options.lineWrapping) { return {begin: 0, end: line.text.length} }
+      prep = prep || prepareMeasureForLine(cm, line);
+      return wrappedLineExtentChar(cm, line, prep, ch)
+    };
+    var wrappedLineExtent = getWrappedLineExtent(start.sticky == "before" ? mv(start, -1) : start.ch);
+
+    if (cm.doc.direction == "rtl" || part.level == 1) {
+      var moveInStorageOrder = (part.level == 1) == (dir < 0);
+      var ch = mv(start, moveInStorageOrder ? 1 : -1);
+      if (ch != null && (!moveInStorageOrder ? ch >= part.from && ch >= wrappedLineExtent.begin : ch <= part.to && ch <= wrappedLineExtent.end)) {
+        // Case 2: We move within an rtl part or in an rtl editor on the same visual line
+        var sticky = moveInStorageOrder ? "before" : "after";
+        return new Pos(start.line, ch, sticky)
+      }
+    }
+
+    // Case 3: Could not move within this bidi part in this visual line, so leave
+    // the current bidi part
