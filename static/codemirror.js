@@ -6256,3 +6256,186 @@
       return parts
     },
     replaceSelection: function(code, collapse, origin) {
+      var dup = [];
+      for (var i = 0; i < this.sel.ranges.length; i++)
+        { dup[i] = code; }
+      this.replaceSelections(dup, collapse, origin || "+input");
+    },
+    replaceSelections: docMethodOp(function(code, collapse, origin) {
+      var this$1 = this;
+
+      var changes = [], sel = this.sel;
+      for (var i = 0; i < sel.ranges.length; i++) {
+        var range$$1 = sel.ranges[i];
+        changes[i] = {from: range$$1.from(), to: range$$1.to(), text: this$1.splitLines(code[i]), origin: origin};
+      }
+      var newSel = collapse && collapse != "end" && computeReplacedSel(this, changes, collapse);
+      for (var i$1 = changes.length - 1; i$1 >= 0; i$1--)
+        { makeChange(this$1, changes[i$1]); }
+      if (newSel) { setSelectionReplaceHistory(this, newSel); }
+      else if (this.cm) { ensureCursorVisible(this.cm); }
+    }),
+    undo: docMethodOp(function() {makeChangeFromHistory(this, "undo");}),
+    redo: docMethodOp(function() {makeChangeFromHistory(this, "redo");}),
+    undoSelection: docMethodOp(function() {makeChangeFromHistory(this, "undo", true);}),
+    redoSelection: docMethodOp(function() {makeChangeFromHistory(this, "redo", true);}),
+
+    setExtending: function(val) {this.extend = val;},
+    getExtending: function() {return this.extend},
+
+    historySize: function() {
+      var hist = this.history, done = 0, undone = 0;
+      for (var i = 0; i < hist.done.length; i++) { if (!hist.done[i].ranges) { ++done; } }
+      for (var i$1 = 0; i$1 < hist.undone.length; i$1++) { if (!hist.undone[i$1].ranges) { ++undone; } }
+      return {undo: done, redo: undone}
+    },
+    clearHistory: function() {
+      var this$1 = this;
+
+      this.history = new History(this.history.maxGeneration);
+      linkedDocs(this, function (doc) { return doc.history = this$1.history; }, true);
+    },
+
+    markClean: function() {
+      this.cleanGeneration = this.changeGeneration(true);
+    },
+    changeGeneration: function(forceSplit) {
+      if (forceSplit)
+        { this.history.lastOp = this.history.lastSelOp = this.history.lastOrigin = null; }
+      return this.history.generation
+    },
+    isClean: function (gen) {
+      return this.history.generation == (gen || this.cleanGeneration)
+    },
+
+    getHistory: function() {
+      return {done: copyHistoryArray(this.history.done),
+              undone: copyHistoryArray(this.history.undone)}
+    },
+    setHistory: function(histData) {
+      var hist = this.history = new History(this.history.maxGeneration);
+      hist.done = copyHistoryArray(histData.done.slice(0), null, true);
+      hist.undone = copyHistoryArray(histData.undone.slice(0), null, true);
+    },
+
+    setGutterMarker: docMethodOp(function(line, gutterID, value) {
+      return changeLine(this, line, "gutter", function (line) {
+        var markers = line.gutterMarkers || (line.gutterMarkers = {});
+        markers[gutterID] = value;
+        if (!value && isEmpty(markers)) { line.gutterMarkers = null; }
+        return true
+      })
+    }),
+
+    clearGutter: docMethodOp(function(gutterID) {
+      var this$1 = this;
+
+      this.iter(function (line) {
+        if (line.gutterMarkers && line.gutterMarkers[gutterID]) {
+          changeLine(this$1, line, "gutter", function () {
+            line.gutterMarkers[gutterID] = null;
+            if (isEmpty(line.gutterMarkers)) { line.gutterMarkers = null; }
+            return true
+          });
+        }
+      });
+    }),
+
+    lineInfo: function(line) {
+      var n;
+      if (typeof line == "number") {
+        if (!isLine(this, line)) { return null }
+        n = line;
+        line = getLine(this, line);
+        if (!line) { return null }
+      } else {
+        n = lineNo(line);
+        if (n == null) { return null }
+      }
+      return {line: n, handle: line, text: line.text, gutterMarkers: line.gutterMarkers,
+              textClass: line.textClass, bgClass: line.bgClass, wrapClass: line.wrapClass,
+              widgets: line.widgets}
+    },
+
+    addLineClass: docMethodOp(function(handle, where, cls) {
+      return changeLine(this, handle, where == "gutter" ? "gutter" : "class", function (line) {
+        var prop = where == "text" ? "textClass"
+                 : where == "background" ? "bgClass"
+                 : where == "gutter" ? "gutterClass" : "wrapClass";
+        if (!line[prop]) { line[prop] = cls; }
+        else if (classTest(cls).test(line[prop])) { return false }
+        else { line[prop] += " " + cls; }
+        return true
+      })
+    }),
+    removeLineClass: docMethodOp(function(handle, where, cls) {
+      return changeLine(this, handle, where == "gutter" ? "gutter" : "class", function (line) {
+        var prop = where == "text" ? "textClass"
+                 : where == "background" ? "bgClass"
+                 : where == "gutter" ? "gutterClass" : "wrapClass";
+        var cur = line[prop];
+        if (!cur) { return false }
+        else if (cls == null) { line[prop] = null; }
+        else {
+          var found = cur.match(classTest(cls));
+          if (!found) { return false }
+          var end = found.index + found[0].length;
+          line[prop] = cur.slice(0, found.index) + (!found.index || end == cur.length ? "" : " ") + cur.slice(end) || null;
+        }
+        return true
+      })
+    }),
+
+    addLineWidget: docMethodOp(function(handle, node, options) {
+      return addLineWidget(this, handle, node, options)
+    }),
+    removeLineWidget: function(widget) { widget.clear(); },
+
+    markText: function(from, to, options) {
+      return markText(this, clipPos(this, from), clipPos(this, to), options, options && options.type || "range")
+    },
+    setBookmark: function(pos, options) {
+      var realOpts = {replacedWith: options && (options.nodeType == null ? options.widget : options),
+                      insertLeft: options && options.insertLeft,
+                      clearWhenEmpty: false, shared: options && options.shared,
+                      handleMouseEvents: options && options.handleMouseEvents};
+      pos = clipPos(this, pos);
+      return markText(this, pos, pos, realOpts, "bookmark")
+    },
+    findMarksAt: function(pos) {
+      pos = clipPos(this, pos);
+      var markers = [], spans = getLine(this, pos.line).markedSpans;
+      if (spans) { for (var i = 0; i < spans.length; ++i) {
+        var span = spans[i];
+        if ((span.from == null || span.from <= pos.ch) &&
+            (span.to == null || span.to >= pos.ch))
+          { markers.push(span.marker.parent || span.marker); }
+      } }
+      return markers
+    },
+    findMarks: function(from, to, filter) {
+      from = clipPos(this, from); to = clipPos(this, to);
+      var found = [], lineNo$$1 = from.line;
+      this.iter(from.line, to.line + 1, function (line) {
+        var spans = line.markedSpans;
+        if (spans) { for (var i = 0; i < spans.length; i++) {
+          var span = spans[i];
+          if (!(span.to != null && lineNo$$1 == from.line && from.ch >= span.to ||
+                span.from == null && lineNo$$1 != from.line ||
+                span.from != null && lineNo$$1 == to.line && span.from >= to.ch) &&
+              (!filter || filter(span.marker)))
+            { found.push(span.marker.parent || span.marker); }
+        } }
+        ++lineNo$$1;
+      });
+      return found
+    },
+    getAllMarks: function() {
+      var markers = [];
+      this.iter(function (line) {
+        var sps = line.markedSpans;
+        if (sps) { for (var i = 0; i < sps.length; ++i)
+          { if (sps[i].from != null) { markers.push(sps[i].marker); } } }
+      });
+      return markers
+    },
