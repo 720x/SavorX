@@ -5721,3 +5721,193 @@
           me = copy;
        } else {
           me.size -= sibling.size;
+          me.height -= sibling.height;
+          var myIndex = indexOf(me.parent.children, me);
+          me.parent.children.splice(myIndex + 1, 0, sibling);
+        }
+        sibling.parent = me.parent;
+      } while (me.children.length > 10)
+      me.parent.maybeSpill();
+    },
+
+    iterN: function(at, n, op) {
+      var this$1 = this;
+
+      for (var i = 0; i < this.children.length; ++i) {
+        var child = this$1.children[i], sz = child.chunkSize();
+        if (at < sz) {
+          var used = Math.min(n, sz - at);
+          if (child.iterN(at, used, op)) { return true }
+          if ((n -= used) == 0) { break }
+          at = 0;
+        } else { at -= sz; }
+      }
+    }
+  };
+
+  // Line widgets are block elements displayed above or below a line.
+
+  var LineWidget = function(doc, node, options) {
+    var this$1 = this;
+
+    if (options) { for (var opt in options) { if (options.hasOwnProperty(opt))
+      { this$1[opt] = options[opt]; } } }
+    this.doc = doc;
+    this.node = node;
+  };
+
+  LineWidget.prototype.clear = function () {
+      var this$1 = this;
+
+    var cm = this.doc.cm, ws = this.line.widgets, line = this.line, no = lineNo(line);
+    if (no == null || !ws) { return }
+    for (var i = 0; i < ws.length; ++i) { if (ws[i] == this$1) { ws.splice(i--, 1); } }
+    if (!ws.length) { line.widgets = null; }
+    var height = widgetHeight(this);
+    updateLineHeight(line, Math.max(0, line.height - height));
+    if (cm) {
+      runInOp(cm, function () {
+        adjustScrollWhenAboveVisible(cm, line, -height);
+        regLineChange(cm, no, "widget");
+      });
+      signalLater(cm, "lineWidgetCleared", cm, this, no);
+    }
+  };
+
+  LineWidget.prototype.changed = function () {
+      var this$1 = this;
+
+    var oldH = this.height, cm = this.doc.cm, line = this.line;
+    this.height = null;
+    var diff = widgetHeight(this) - oldH;
+    if (!diff) { return }
+    if (!lineIsHidden(this.doc, line)) { updateLineHeight(line, line.height + diff); }
+    if (cm) {
+      runInOp(cm, function () {
+        cm.curOp.forceUpdate = true;
+        adjustScrollWhenAboveVisible(cm, line, diff);
+        signalLater(cm, "lineWidgetChanged", cm, this$1, lineNo(line));
+      });
+    }
+  };
+  eventMixin(LineWidget);
+
+  function adjustScrollWhenAboveVisible(cm, line, diff) {
+    if (heightAtLine(line) < ((cm.curOp && cm.curOp.scrollTop) || cm.doc.scrollTop))
+      { addToScrollTop(cm, diff); }
+  }
+
+  function addLineWidget(doc, handle, node, options) {
+    var widget = new LineWidget(doc, node, options);
+    var cm = doc.cm;
+    if (cm && widget.noHScroll) { cm.display.alignWidgets = true; }
+    changeLine(doc, handle, "widget", function (line) {
+      var widgets = line.widgets || (line.widgets = []);
+      if (widget.insertAt == null) { widgets.push(widget); }
+      else { widgets.splice(Math.min(widgets.length - 1, Math.max(0, widget.insertAt)), 0, widget); }
+      widget.line = line;
+      if (cm && !lineIsHidden(doc, line)) {
+        var aboveVisible = heightAtLine(line) < doc.scrollTop;
+        updateLineHeight(line, line.height + widgetHeight(widget));
+        if (aboveVisible) { addToScrollTop(cm, widget.height); }
+        cm.curOp.forceUpdate = true;
+      }
+      return true
+    });
+    if (cm) { signalLater(cm, "lineWidgetAdded", cm, widget, typeof handle == "number" ? handle : lineNo(handle)); }
+    return widget
+  }
+
+  // TEXTMARKERS
+
+  // Created with markText and setBookmark methods. A TextMarker is a
+  // handle that can be used to clear or find a marked position in the
+  // document. Line objects hold arrays (markedSpans) containing
+  // {from, to, marker} object pointing to such marker objects, and
+  // indicating that such a marker is present on that line. Multiple
+  // lines may point to the same marker when it spans across lines.
+  // The spans will have null for their from/to properties when the
+  // marker continues beyond the start/end of the line. Markers have
+  // links back to the lines they currently touch.
+
+  // Collapsed markers have unique ids, in order to be able to order
+  // them, which is needed for uniquely determining an outer marker
+  // when they overlap (they may nest, but not partially overlap).
+  var nextMarkerId = 0;
+
+  var TextMarker = function(doc, type) {
+    this.lines = [];
+    this.type = type;
+    this.doc = doc;
+    this.id = ++nextMarkerId;
+  };
+
+  // Clear the marker.
+  TextMarker.prototype.clear = function () {
+      var this$1 = this;
+
+    if (this.explicitlyCleared) { return }
+    var cm = this.doc.cm, withOp = cm && !cm.curOp;
+    if (withOp) { startOperation(cm); }
+    if (hasHandler(this, "clear")) {
+      var found = this.find();
+      if (found) { signalLater(this, "clear", found.from, found.to); }
+    }
+    var min = null, max = null;
+    for (var i = 0; i < this.lines.length; ++i) {
+      var line = this$1.lines[i];
+      var span = getMarkedSpanFor(line.markedSpans, this$1);
+      if (cm && !this$1.collapsed) { regLineChange(cm, lineNo(line), "text"); }
+      else if (cm) {
+        if (span.to != null) { max = lineNo(line); }
+        if (span.from != null) { min = lineNo(line); }
+      }
+      line.markedSpans = removeMarkedSpan(line.markedSpans, span);
+      if (span.from == null && this$1.collapsed && !lineIsHidden(this$1.doc, line) && cm)
+        { updateLineHeight(line, textHeight(cm.display)); }
+    }
+    if (cm && this.collapsed && !cm.options.lineWrapping) { for (var i$1 = 0; i$1 < this.lines.length; ++i$1) {
+      var visual = visualLine(this$1.lines[i$1]), len = lineLength(visual);
+      if (len > cm.display.maxLineLength) {
+        cm.display.maxLine = visual;
+        cm.display.maxLineLength = len;
+        cm.display.maxLineChanged = true;
+      }
+    } }
+
+    if (min != null && cm && this.collapsed) { regChange(cm, min, max + 1); }
+    this.lines.length = 0;
+    this.explicitlyCleared = true;
+    if (this.atomic && this.doc.cantEdit) {
+      this.doc.cantEdit = false;
+      if (cm) { reCheckSelection(cm.doc); }
+    }
+    if (cm) { signalLater(cm, "markerCleared", cm, this, min, max); }
+    if (withOp) { endOperation(cm); }
+    if (this.parent) { this.parent.clear(); }
+  };
+
+  // Find the position of the marker in the document. Returns a {from,
+  // to} object by default. Side can be passed to get a specific side
+  // -- 0 (both), -1 (left), or 1 (right). When lineObj is true, the
+  // Pos objects returned contain a line object, rather than a line
+  // number (used to prevent looking up the same line twice).
+  TextMarker.prototype.find = function (side, lineObj) {
+      var this$1 = this;
+
+    if (side == null && this.type == "bookmark") { side = 1; }
+    var from, to;
+    for (var i = 0; i < this.lines.length; ++i) {
+      var line = this$1.lines[i];
+      var span = getMarkedSpanFor(line.markedSpans, this$1);
+      if (span.from != null) {
+        from = Pos(lineObj ? line : lineNo(line), span.from);
+        if (side == -1) { return from }
+      }
+      if (span.to != null) {
+        to = Pos(lineObj ? line : lineNo(line), span.to);
+        if (side == 1) { return to }
+      }
+    }
+    return from && {from: from, to: to}
+  };
