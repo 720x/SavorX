@@ -8001,3 +8001,192 @@
           d.activeTouch.left = e.touches[0].pageX;
           d.activeTouch.top = e.touches[0].pageY;
         }
+      }
+    });
+    on(d.scroller, "touchmove", function () {
+      if (d.activeTouch) { d.activeTouch.moved = true; }
+    });
+    on(d.scroller, "touchend", function (e) {
+      var touch = d.activeTouch;
+      if (touch && !eventInWidget(d, e) && touch.left != null &&
+          !touch.moved && new Date - touch.start < 300) {
+        var pos = cm.coordsChar(d.activeTouch, "page"), range;
+        if (!touch.prev || farAway(touch, touch.prev)) // Single tap
+          { range = new Range(pos, pos); }
+        else if (!touch.prev.prev || farAway(touch, touch.prev.prev)) // Double tap
+          { range = cm.findWordAt(pos); }
+        else // Triple tap
+          { range = new Range(Pos(pos.line, 0), clipPos(cm.doc, Pos(pos.line + 1, 0))); }
+        cm.setSelection(range.anchor, range.head);
+        cm.focus();
+        e_preventDefault(e);
+      }
+      finishTouch();
+    });
+    on(d.scroller, "touchcancel", finishTouch);
+
+    // Sync scrolling between fake scrollbars and real scrollable
+    // area, ensure viewport is updated when scrolling.
+    on(d.scroller, "scroll", function () {
+      if (d.scroller.clientHeight) {
+        updateScrollTop(cm, d.scroller.scrollTop);
+        setScrollLeft(cm, d.scroller.scrollLeft, true);
+        signal(cm, "scroll", cm);
+      }
+    });
+
+    // Listen to wheel events in order to try and update the viewport on time.
+    on(d.scroller, "mousewheel", function (e) { return onScrollWheel(cm, e); });
+    on(d.scroller, "DOMMouseScroll", function (e) { return onScrollWheel(cm, e); });
+
+    // Prevent wrapper from ever scrolling
+    on(d.wrapper, "scroll", function () { return d.wrapper.scrollTop = d.wrapper.scrollLeft = 0; });
+
+    d.dragFunctions = {
+      enter: function (e) {if (!signalDOMEvent(cm, e)) { e_stop(e); }},
+      over: function (e) {if (!signalDOMEvent(cm, e)) { onDragOver(cm, e); e_stop(e); }},
+      start: function (e) { return onDragStart(cm, e); },
+      drop: operation(cm, onDrop),
+      leave: function (e) {if (!signalDOMEvent(cm, e)) { clearDragCursor(cm); }}
+    };
+
+    var inp = d.input.getField();
+    on(inp, "keyup", function (e) { return onKeyUp.call(cm, e); });
+    on(inp, "keydown", operation(cm, onKeyDown));
+    on(inp, "keypress", operation(cm, onKeyPress));
+    on(inp, "focus", function (e) { return onFocus(cm, e); });
+    on(inp, "blur", function (e) { return onBlur(cm, e); });
+  }
+
+  var initHooks = [];
+  CodeMirror.defineInitHook = function (f) { return initHooks.push(f); };
+
+  // Indent the given line. The how parameter can be "smart",
+  // "add"/null, "subtract", or "prev". When aggressive is false
+  // (typically set to true for forced single-line indents), empty
+  // lines are not indented, and places where the mode returns Pass
+  // are left alone.
+  function indentLine(cm, n, how, aggressive) {
+    var doc = cm.doc, state;
+    if (how == null) { how = "add"; }
+    if (how == "smart") {
+      // Fall back to "prev" when the mode doesn't have an indentation
+      // method.
+      if (!doc.mode.indent) { how = "prev"; }
+      else { state = getContextBefore(cm, n).state; }
+    }
+
+    var tabSize = cm.options.tabSize;
+    var line = getLine(doc, n), curSpace = countColumn(line.text, null, tabSize);
+    if (line.stateAfter) { line.stateAfter = null; }
+    var curSpaceString = line.text.match(/^\s*/)[0], indentation;
+    if (!aggressive && !/\S/.test(line.text)) {
+      indentation = 0;
+      how = "not";
+    } else if (how == "smart") {
+      indentation = doc.mode.indent(state, line.text.slice(curSpaceString.length), line.text);
+      if (indentation == Pass || indentation > 150) {
+        if (!aggressive) { return }
+        how = "prev";
+      }
+    }
+    if (how == "prev") {
+      if (n > doc.first) { indentation = countColumn(getLine(doc, n-1).text, null, tabSize); }
+      else { indentation = 0; }
+    } else if (how == "add") {
+      indentation = curSpace + cm.options.indentUnit;
+    } else if (how == "subtract") {
+      indentation = curSpace - cm.options.indentUnit;
+    } else if (typeof how == "number") {
+      indentation = curSpace + how;
+    }
+    indentation = Math.max(0, indentation);
+
+    var indentString = "", pos = 0;
+    if (cm.options.indentWithTabs)
+      { for (var i = Math.floor(indentation / tabSize); i; --i) {pos += tabSize; indentString += "\t";} }
+    if (pos < indentation) { indentString += spaceStr(indentation - pos); }
+
+    if (indentString != curSpaceString) {
+      replaceRange(doc, indentString, Pos(n, 0), Pos(n, curSpaceString.length), "+input");
+      line.stateAfter = null;
+      return true
+    } else {
+      // Ensure that, if the cursor was in the whitespace at the start
+      // of the line, it is moved to the end of that space.
+      for (var i$1 = 0; i$1 < doc.sel.ranges.length; i$1++) {
+        var range = doc.sel.ranges[i$1];
+        if (range.head.line == n && range.head.ch < curSpaceString.length) {
+          var pos$1 = Pos(n, curSpaceString.length);
+          replaceOneSelection(doc, i$1, new Range(pos$1, pos$1));
+          break
+        }
+      }
+    }
+  }
+
+  // This will be set to a {lineWise: bool, text: [string]} object, so
+  // that, when pasting, we know what kind of selections the copied
+  // text was made out of.
+  var lastCopied = null;
+
+  function setLastCopied(newLastCopied) {
+    lastCopied = newLastCopied;
+  }
+
+  function applyTextInput(cm, inserted, deleted, sel, origin) {
+    var doc = cm.doc;
+    cm.display.shift = false;
+    if (!sel) { sel = doc.sel; }
+
+    var recent = +new Date - 200;
+    var paste = origin == "paste" || cm.state.pasteIncoming > recent;
+    var textLines = splitLinesAuto(inserted), multiPaste = null;
+    // When pasting N lines into N selections, insert one line per selection
+    if (paste && sel.ranges.length > 1) {
+      if (lastCopied && lastCopied.text.join("\n") == inserted) {
+        if (sel.ranges.length % lastCopied.text.length == 0) {
+          multiPaste = [];
+          for (var i = 0; i < lastCopied.text.length; i++)
+            { multiPaste.push(doc.splitLines(lastCopied.text[i])); }
+        }
+      } else if (textLines.length == sel.ranges.length && cm.options.pasteLinesPerSelection) {
+        multiPaste = map(textLines, function (l) { return [l]; });
+      }
+    }
+
+    var updateInput = cm.curOp.updateInput;
+    // Normal behavior is to insert the new text into every selection
+    for (var i$1 = sel.ranges.length - 1; i$1 >= 0; i$1--) {
+      var range$$1 = sel.ranges[i$1];
+      var from = range$$1.from(), to = range$$1.to();
+      if (range$$1.empty()) {
+        if (deleted && deleted > 0) // Handle deletion
+          { from = Pos(from.line, from.ch - deleted); }
+        else if (cm.state.overwrite && !paste) // Handle overwrite
+          { to = Pos(to.line, Math.min(getLine(doc, to.line).text.length, to.ch + lst(textLines).length)); }
+        else if (paste && lastCopied && lastCopied.lineWise && lastCopied.text.join("\n") == inserted)
+          { from = to = Pos(from.line, 0); }
+      }
+      var changeEvent = {from: from, to: to, text: multiPaste ? multiPaste[i$1 % multiPaste.length] : textLines,
+                         origin: origin || (paste ? "paste" : cm.state.cutIncoming > recent ? "cut" : "+input")};
+      makeChange(cm.doc, changeEvent);
+      signalLater(cm, "inputRead", cm, changeEvent);
+    }
+    if (inserted && !paste)
+      { triggerElectric(cm, inserted); }
+
+    ensureCursorVisible(cm);
+    if (cm.curOp.updateInput < 2) { cm.curOp.updateInput = updateInput; }
+    cm.curOp.typing = true;
+    cm.state.pasteIncoming = cm.state.cutIncoming = -1;
+  }
+
+  function handlePaste(e, cm) {
+    var pasted = e.clipboardData && e.clipboardData.getData("Text");
+    if (pasted) {
+      e.preventDefault();
+      if (!cm.isReadOnly() && !cm.options.disableInput)
+        { runInOp(cm, function () { return applyTextInput(cm, pasted, 0, null, "paste"); }); }
+      return true
+    }
