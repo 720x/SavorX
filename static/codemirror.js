@@ -8780,3 +8780,203 @@
     var target;
     for (;;) {
       target = coordsChar(cm, x, y);
+      if (!target.outside) { break }
+      if (dir < 0 ? y <= 0 : y >= doc.height) { target.hitSide = true; break }
+      y += dir * 5;
+    }
+    return target
+  }
+
+  // CONTENTEDITABLE INPUT STYLE
+
+  var ContentEditableInput = function(cm) {
+    this.cm = cm;
+    this.lastAnchorNode = this.lastAnchorOffset = this.lastFocusNode = this.lastFocusOffset = null;
+    this.polling = new Delayed();
+    this.composing = null;
+    this.gracePeriod = false;
+    this.readDOMTimeout = null;
+  };
+
+  ContentEditableInput.prototype.init = function (display) {
+      var this$1 = this;
+
+    var input = this, cm = input.cm;
+    var div = input.div = display.lineDiv;
+    disableBrowserMagic(div, cm.options.spellcheck, cm.options.autocorrect, cm.options.autocapitalize);
+
+    on(div, "paste", function (e) {
+      if (signalDOMEvent(cm, e) || handlePaste(e, cm)) { return }
+      // IE doesn't fire input events, so we schedule a read for the pasted content in this way
+      if (ie_version <= 11) { setTimeout(operation(cm, function () { return this$1.updateFromDOM(); }), 20); }
+    });
+
+    on(div, "compositionstart", function (e) {
+      this$1.composing = {data: e.data, done: false};
+    });
+    on(div, "compositionupdate", function (e) {
+      if (!this$1.composing) { this$1.composing = {data: e.data, done: false}; }
+    });
+    on(div, "compositionend", function (e) {
+      if (this$1.composing) {
+        if (e.data != this$1.composing.data) { this$1.readFromDOMSoon(); }
+        this$1.composing.done = true;
+      }
+    });
+
+    on(div, "touchstart", function () { return input.forceCompositionEnd(); });
+
+    on(div, "input", function () {
+      if (!this$1.composing) { this$1.readFromDOMSoon(); }
+    });
+
+    function onCopyCut(e) {
+      if (signalDOMEvent(cm, e)) { return }
+      if (cm.somethingSelected()) {
+        setLastCopied({lineWise: false, text: cm.getSelections()});
+        if (e.type == "cut") { cm.replaceSelection("", null, "cut"); }
+      } else if (!cm.options.lineWiseCopyCut) {
+        return
+      } else {
+        var ranges = copyableRanges(cm);
+        setLastCopied({lineWise: true, text: ranges.text});
+        if (e.type == "cut") {
+          cm.operation(function () {
+            cm.setSelections(ranges.ranges, 0, sel_dontScroll);
+            cm.replaceSelection("", null, "cut");
+          });
+        }
+      }
+      if (e.clipboardData) {
+        e.clipboardData.clearData();
+        var content = lastCopied.text.join("\n");
+        // iOS exposes the clipboard API, but seems to discard content inserted into it
+        e.clipboardData.setData("Text", content);
+        if (e.clipboardData.getData("Text") == content) {
+          e.preventDefault();
+          return
+        }
+      }
+      // Old-fashioned briefly-focus-a-textarea hack
+      var kludge = hiddenTextarea(), te = kludge.firstChild;
+      cm.display.lineSpace.insertBefore(kludge, cm.display.lineSpace.firstChild);
+      te.value = lastCopied.text.join("\n");
+      var hadFocus = document.activeElement;
+      selectInput(te);
+      setTimeout(function () {
+        cm.display.lineSpace.removeChild(kludge);
+        hadFocus.focus();
+        if (hadFocus == div) { input.showPrimarySelection(); }
+      }, 50);
+    }
+    on(div, "copy", onCopyCut);
+    on(div, "cut", onCopyCut);
+  };
+
+  ContentEditableInput.prototype.prepareSelection = function () {
+    var result = prepareSelection(this.cm, false);
+    result.focus = document.activeElement == this.div;
+    return result
+  };
+
+  ContentEditableInput.prototype.showSelection = function (info, takeFocus) {
+    if (!info || !this.cm.display.view.length) { return }
+    if (info.focus || takeFocus) { this.showPrimarySelection(); }
+    this.showMultipleSelections(info);
+  };
+
+  ContentEditableInput.prototype.getSelection = function () {
+    return this.cm.display.wrapper.ownerDocument.getSelection()
+  };
+
+  ContentEditableInput.prototype.showPrimarySelection = function () {
+    var sel = this.getSelection(), cm = this.cm, prim = cm.doc.sel.primary();
+    var from = prim.from(), to = prim.to();
+
+    if (cm.display.viewTo == cm.display.viewFrom || from.line >= cm.display.viewTo || to.line < cm.display.viewFrom) {
+      sel.removeAllRanges();
+      return
+    }
+
+    var curAnchor = domToPos(cm, sel.anchorNode, sel.anchorOffset);
+    var curFocus = domToPos(cm, sel.focusNode, sel.focusOffset);
+    if (curAnchor && !curAnchor.bad && curFocus && !curFocus.bad &&
+        cmp(minPos(curAnchor, curFocus), from) == 0 &&
+        cmp(maxPos(curAnchor, curFocus), to) == 0)
+      { return }
+
+    var view = cm.display.view;
+    var start = (from.line >= cm.display.viewFrom && posToDOM(cm, from)) ||
+        {node: view[0].measure.map[2], offset: 0};
+    var end = to.line < cm.display.viewTo && posToDOM(cm, to);
+    if (!end) {
+      var measure = view[view.length - 1].measure;
+      var map$$1 = measure.maps ? measure.maps[measure.maps.length - 1] : measure.map;
+      end = {node: map$$1[map$$1.length - 1], offset: map$$1[map$$1.length - 2] - map$$1[map$$1.length - 3]};
+    }
+
+    if (!start || !end) {
+      sel.removeAllRanges();
+      return
+    }
+
+    var old = sel.rangeCount && sel.getRangeAt(0), rng;
+    try { rng = range(start.node, start.offset, end.offset, end.node); }
+    catch(e) {} // Our model of the DOM might be outdated, in which case the range we try to set can be impossible
+    if (rng) {
+      if (!gecko && cm.state.focused) {
+        sel.collapse(start.node, start.offset);
+        if (!rng.collapsed) {
+          sel.removeAllRanges();
+          sel.addRange(rng);
+        }
+      } else {
+        sel.removeAllRanges();
+        sel.addRange(rng);
+      }
+      if (old && sel.anchorNode == null) { sel.addRange(old); }
+      else if (gecko) { this.startGracePeriod(); }
+    }
+    this.rememberSelection();
+  };
+
+  ContentEditableInput.prototype.startGracePeriod = function () {
+      var this$1 = this;
+
+    clearTimeout(this.gracePeriod);
+    this.gracePeriod = setTimeout(function () {
+      this$1.gracePeriod = false;
+      if (this$1.selectionChanged())
+        { this$1.cm.operation(function () { return this$1.cm.curOp.selectionChanged = true; }); }
+    }, 20);
+  };
+
+  ContentEditableInput.prototype.showMultipleSelections = function (info) {
+    removeChildrenAndAdd(this.cm.display.cursorDiv, info.cursors);
+    removeChildrenAndAdd(this.cm.display.selectionDiv, info.selection);
+  };
+
+  ContentEditableInput.prototype.rememberSelection = function () {
+    var sel = this.getSelection();
+    this.lastAnchorNode = sel.anchorNode; this.lastAnchorOffset = sel.anchorOffset;
+    this.lastFocusNode = sel.focusNode; this.lastFocusOffset = sel.focusOffset;
+  };
+
+  ContentEditableInput.prototype.selectionInEditor = function () {
+    var sel = this.getSelection();
+    if (!sel.rangeCount) { return false }
+    var node = sel.getRangeAt(0).commonAncestorContainer;
+    return contains(this.div, node)
+  };
+
+  ContentEditableInput.prototype.focus = function () {
+    if (this.cm.options.readOnly != "nocursor") {
+      if (!this.selectionInEditor() || document.activeElement != this.div)
+        { this.showSelection(this.prepareSelection(), true); }
+      this.div.focus();
+    }
+  };
+  ContentEditableInput.prototype.blur = function () { this.div.blur(); };
+  ContentEditableInput.prototype.getField = function () { return this.div };
+
+  ContentEditableInput.prototype.supportsTouch = function () { return true };
