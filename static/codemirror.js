@@ -9374,3 +9374,182 @@
       if (!te.dispatchEvent) {
         cm.state.pasteIncoming = +new Date;
         input.focus();
+        return
+      }
+
+      // Pass the `paste` event to the textarea so it's handled by its event listener.
+      var event = new Event("paste");
+      event.clipboardData = e.clipboardData;
+      te.dispatchEvent(event);
+    });
+
+    // Prevent normal selection in the editor (we handle our own)
+    on(display.lineSpace, "selectstart", function (e) {
+      if (!eventInWidget(display, e)) { e_preventDefault(e); }
+    });
+
+    on(te, "compositionstart", function () {
+      var start = cm.getCursor("from");
+      if (input.composing) { input.composing.range.clear(); }
+      input.composing = {
+        start: start,
+        range: cm.markText(start, cm.getCursor("to"), {className: "CodeMirror-composing"})
+      };
+    });
+    on(te, "compositionend", function () {
+      if (input.composing) {
+        input.poll();
+        input.composing.range.clear();
+        input.composing = null;
+      }
+    });
+  };
+
+  TextareaInput.prototype.createField = function (_display) {
+    // Wraps and hides input textarea
+    this.wrapper = hiddenTextarea();
+    // The semihidden textarea that is focused when the editor is
+    // focused, and receives input.
+    this.textarea = this.wrapper.firstChild;
+  };
+
+  TextareaInput.prototype.prepareSelection = function () {
+    // Redraw the selection and/or cursor
+    var cm = this.cm, display = cm.display, doc = cm.doc;
+    var result = prepareSelection(cm);
+
+    // Move the hidden textarea near the cursor to prevent scrolling artifacts
+    if (cm.options.moveInputWithCursor) {
+      var headPos = cursorCoords(cm, doc.sel.primary().head, "div");
+      var wrapOff = display.wrapper.getBoundingClientRect(), lineOff = display.lineDiv.getBoundingClientRect();
+      result.teTop = Math.max(0, Math.min(display.wrapper.clientHeight - 10,
+                                          headPos.top + lineOff.top - wrapOff.top));
+      result.teLeft = Math.max(0, Math.min(display.wrapper.clientWidth - 10,
+                                           headPos.left + lineOff.left - wrapOff.left));
+    }
+
+    return result
+  };
+
+  TextareaInput.prototype.showSelection = function (drawn) {
+    var cm = this.cm, display = cm.display;
+    removeChildrenAndAdd(display.cursorDiv, drawn.cursors);
+    removeChildrenAndAdd(display.selectionDiv, drawn.selection);
+    if (drawn.teTop != null) {
+      this.wrapper.style.top = drawn.teTop + "px";
+      this.wrapper.style.left = drawn.teLeft + "px";
+    }
+  };
+
+  // Reset the input to correspond to the selection (or to be empty,
+  // when not typing and nothing is selected)
+  TextareaInput.prototype.reset = function (typing) {
+    if (this.contextMenuPending || this.composing) { return }
+    var cm = this.cm;
+    if (cm.somethingSelected()) {
+      this.prevInput = "";
+      var content = cm.getSelection();
+      this.textarea.value = content;
+      if (cm.state.focused) { selectInput(this.textarea); }
+      if (ie && ie_version >= 9) { this.hasSelection = content; }
+    } else if (!typing) {
+      this.prevInput = this.textarea.value = "";
+      if (ie && ie_version >= 9) { this.hasSelection = null; }
+    }
+  };
+
+  TextareaInput.prototype.getField = function () { return this.textarea };
+
+  TextareaInput.prototype.supportsTouch = function () { return false };
+
+  TextareaInput.prototype.focus = function () {
+    if (this.cm.options.readOnly != "nocursor" && (!mobile || activeElt() != this.textarea)) {
+      try { this.textarea.focus(); }
+      catch (e) {} // IE8 will throw if the textarea is display: none or not in DOM
+    }
+  };
+
+  TextareaInput.prototype.blur = function () { this.textarea.blur(); };
+
+  TextareaInput.prototype.resetPosition = function () {
+    this.wrapper.style.top = this.wrapper.style.left = 0;
+  };
+
+  TextareaInput.prototype.receivedFocus = function () { this.slowPoll(); };
+
+  // Poll for input changes, using the normal rate of polling. This
+  // runs as long as the editor is focused.
+  TextareaInput.prototype.slowPoll = function () {
+      var this$1 = this;
+
+    if (this.pollingFast) { return }
+    this.polling.set(this.cm.options.pollInterval, function () {
+      this$1.poll();
+      if (this$1.cm.state.focused) { this$1.slowPoll(); }
+    });
+  };
+
+  // When an event has just come in that is likely to add or change
+  // something in the input textarea, we poll faster, to ensure that
+  // the change appears on the screen quickly.
+  TextareaInput.prototype.fastPoll = function () {
+    var missed = false, input = this;
+    input.pollingFast = true;
+    function p() {
+      var changed = input.poll();
+      if (!changed && !missed) {missed = true; input.polling.set(60, p);}
+      else {input.pollingFast = false; input.slowPoll();}
+    }
+    input.polling.set(20, p);
+  };
+
+  // Read input from the textarea, and update the document to match.
+  // When something is selected, it is present in the textarea, and
+  // selected (unless it is huge, in which case a placeholder is
+  // used). When nothing is selected, the cursor sits after previously
+  // seen text (can be empty), which is stored in prevInput (we must
+  // not reset the textarea when typing, because that breaks IME).
+  TextareaInput.prototype.poll = function () {
+      var this$1 = this;
+
+    var cm = this.cm, input = this.textarea, prevInput = this.prevInput;
+    // Since this is called a *lot*, try to bail out as cheaply as
+    // possible when it is clear that nothing happened. hasSelection
+    // will be the case when there is a lot of text in the textarea,
+    // in which case reading its value would be expensive.
+    if (this.contextMenuPending || !cm.state.focused ||
+        (hasSelection(input) && !prevInput && !this.composing) ||
+        cm.isReadOnly() || cm.options.disableInput || cm.state.keySeq)
+      { return false }
+
+    var text = input.value;
+    // If nothing changed, bail.
+    if (text == prevInput && !cm.somethingSelected()) { return false }
+    // Work around nonsensical selection resetting in IE9/10, and
+    // inexplicable appearance of private area unicode characters on
+    // some key combos in Mac (#2689).
+    if (ie && ie_version >= 9 && this.hasSelection === text ||
+        mac && /[\uf700-\uf7ff]/.test(text)) {
+      cm.display.input.reset();
+      return false
+    }
+
+    if (cm.doc.sel == cm.display.selForContextMenu) {
+      var first = text.charCodeAt(0);
+      if (first == 0x200b && !prevInput) { prevInput = "\u200b"; }
+      if (first == 0x21da) { this.reset(); return this.cm.execCommand("undo") }
+    }
+    // Find the part of the input that is actually new
+    var same = 0, l = Math.min(prevInput.length, text.length);
+    while (same < l && prevInput.charCodeAt(same) == text.charCodeAt(same)) { ++same; }
+
+    runInOp(cm, function () {
+      applyTextInput(cm, text.slice(same), prevInput.length - same,
+                     null, this$1.composing ? "*compose" : null);
+
+      // Don't leave long text in the textarea, since it makes further polling slow
+      if (text.length > 1000 || text.indexOf("\n") > -1) { input.value = this$1.prevInput = ""; }
+      else { this$1.prevInput = text; }
+
+      if (this$1.composing) {
+        this$1.composing.range.clear();
