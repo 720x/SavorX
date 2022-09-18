@@ -9158,3 +9158,219 @@
     var view = findViewForLine(cm, pos.line);
     if (!view || view.hidden) { return null }
     var line = getLine(cm.doc, pos.line);
+    var info = mapFromLineView(view, line, pos.line);
+
+    var order = getOrder(line, cm.doc.direction), side = "left";
+    if (order) {
+      var partPos = getBidiPartAt(order, pos.ch);
+      side = partPos % 2 ? "right" : "left";
+    }
+    var result = nodeAndOffsetInLineMap(info.map, pos.ch, side);
+    result.offset = result.collapse == "right" ? result.end : result.start;
+    return result
+  }
+
+  function isInGutter(node) {
+    for (var scan = node; scan; scan = scan.parentNode)
+      { if (/CodeMirror-gutter-wrapper/.test(scan.className)) { return true } }
+    return false
+  }
+
+  function badPos(pos, bad) { if (bad) { pos.bad = true; } return pos }
+
+  function domTextBetween(cm, from, to, fromLine, toLine) {
+    var text = "", closing = false, lineSep = cm.doc.lineSeparator(), extraLinebreak = false;
+    function recognizeMarker(id) { return function (marker) { return marker.id == id; } }
+    function close() {
+      if (closing) {
+        text += lineSep;
+        if (extraLinebreak) { text += lineSep; }
+        closing = extraLinebreak = false;
+      }
+    }
+    function addText(str) {
+      if (str) {
+        close();
+        text += str;
+      }
+    }
+    function walk(node) {
+      if (node.nodeType == 1) {
+        var cmText = node.getAttribute("cm-text");
+        if (cmText) {
+          addText(cmText);
+          return
+        }
+        var markerID = node.getAttribute("cm-marker"), range$$1;
+        if (markerID) {
+          var found = cm.findMarks(Pos(fromLine, 0), Pos(toLine + 1, 0), recognizeMarker(+markerID));
+          if (found.length && (range$$1 = found[0].find(0)))
+            { addText(getBetween(cm.doc, range$$1.from, range$$1.to).join(lineSep)); }
+          return
+        }
+        if (node.getAttribute("contenteditable") == "false") { return }
+        var isBlock = /^(pre|div|p|li|table|br)$/i.test(node.nodeName);
+        if (!/^br$/i.test(node.nodeName) && node.textContent.length == 0) { return }
+
+        if (isBlock) { close(); }
+        for (var i = 0; i < node.childNodes.length; i++)
+          { walk(node.childNodes[i]); }
+
+        if (/^(pre|p)$/i.test(node.nodeName)) { extraLinebreak = true; }
+        if (isBlock) { closing = true; }
+      } else if (node.nodeType == 3) {
+        addText(node.nodeValue.replace(/\u200b/g, "").replace(/\u00a0/g, " "));
+      }
+    }
+    for (;;) {
+      walk(from);
+      if (from == to) { break }
+      from = from.nextSibling;
+      extraLinebreak = false;
+    }
+    return text
+  }
+
+  function domToPos(cm, node, offset) {
+    var lineNode;
+    if (node == cm.display.lineDiv) {
+      lineNode = cm.display.lineDiv.childNodes[offset];
+      if (!lineNode) { return badPos(cm.clipPos(Pos(cm.display.viewTo - 1)), true) }
+      node = null; offset = 0;
+    } else {
+      for (lineNode = node;; lineNode = lineNode.parentNode) {
+        if (!lineNode || lineNode == cm.display.lineDiv) { return null }
+        if (lineNode.parentNode && lineNode.parentNode == cm.display.lineDiv) { break }
+      }
+    }
+    for (var i = 0; i < cm.display.view.length; i++) {
+      var lineView = cm.display.view[i];
+      if (lineView.node == lineNode)
+        { return locateNodeInLineView(lineView, node, offset) }
+    }
+  }
+
+  function locateNodeInLineView(lineView, node, offset) {
+    var wrapper = lineView.text.firstChild, bad = false;
+    if (!node || !contains(wrapper, node)) { return badPos(Pos(lineNo(lineView.line), 0), true) }
+    if (node == wrapper) {
+      bad = true;
+      node = wrapper.childNodes[offset];
+      offset = 0;
+      if (!node) {
+        var line = lineView.rest ? lst(lineView.rest) : lineView.line;
+        return badPos(Pos(lineNo(line), line.text.length), bad)
+      }
+    }
+
+    var textNode = node.nodeType == 3 ? node : null, topNode = node;
+    if (!textNode && node.childNodes.length == 1 && node.firstChild.nodeType == 3) {
+      textNode = node.firstChild;
+      if (offset) { offset = textNode.nodeValue.length; }
+    }
+    while (topNode.parentNode != wrapper) { topNode = topNode.parentNode; }
+    var measure = lineView.measure, maps = measure.maps;
+
+    function find(textNode, topNode, offset) {
+      for (var i = -1; i < (maps ? maps.length : 0); i++) {
+        var map$$1 = i < 0 ? measure.map : maps[i];
+        for (var j = 0; j < map$$1.length; j += 3) {
+          var curNode = map$$1[j + 2];
+          if (curNode == textNode || curNode == topNode) {
+            var line = lineNo(i < 0 ? lineView.line : lineView.rest[i]);
+            var ch = map$$1[j] + offset;
+            if (offset < 0 || curNode != textNode) { ch = map$$1[j + (offset ? 1 : 0)]; }
+            return Pos(line, ch)
+          }
+        }
+      }
+    }
+    var found = find(textNode, topNode, offset);
+    if (found) { return badPos(found, bad) }
+
+    // FIXME this is all really shaky. might handle the few cases it needs to handle, but likely to cause problems
+    for (var after = topNode.nextSibling, dist = textNode ? textNode.nodeValue.length - offset : 0; after; after = after.nextSibling) {
+      found = find(after, after.firstChild, 0);
+      if (found)
+        { return badPos(Pos(found.line, found.ch - dist), bad) }
+      else
+        { dist += after.textContent.length; }
+    }
+    for (var before = topNode.previousSibling, dist$1 = offset; before; before = before.previousSibling) {
+      found = find(before, before.firstChild, -1);
+      if (found)
+        { return badPos(Pos(found.line, found.ch + dist$1), bad) }
+      else
+        { dist$1 += before.textContent.length; }
+    }
+  }
+
+  // TEXTAREA INPUT STYLE
+
+  var TextareaInput = function(cm) {
+    this.cm = cm;
+    // See input.poll and input.reset
+    this.prevInput = "";
+
+    // Flag that indicates whether we expect input to appear real soon
+    // now (after some event like 'keypress' or 'input') and are
+    // polling intensively.
+    this.pollingFast = false;
+    // Self-resetting timeout for the poller
+    this.polling = new Delayed();
+    // Used to work around IE issue with selection being forgotten when focus moves away from textarea
+    this.hasSelection = false;
+    this.composing = null;
+  };
+
+  TextareaInput.prototype.init = function (display) {
+      var this$1 = this;
+
+    var input = this, cm = this.cm;
+    this.createField(display);
+    var te = this.textarea;
+
+    display.wrapper.insertBefore(this.wrapper, display.wrapper.firstChild);
+
+    // Needed to hide big blue blinking cursor on Mobile Safari (doesn't seem to work in iOS 8 anymore)
+    if (ios) { te.style.width = "0px"; }
+
+    on(te, "input", function () {
+      if (ie && ie_version >= 9 && this$1.hasSelection) { this$1.hasSelection = null; }
+      input.poll();
+    });
+
+    on(te, "paste", function (e) {
+      if (signalDOMEvent(cm, e) || handlePaste(e, cm)) { return }
+
+      cm.state.pasteIncoming = +new Date;
+      input.fastPoll();
+    });
+
+    function prepareCopyCut(e) {
+      if (signalDOMEvent(cm, e)) { return }
+      if (cm.somethingSelected()) {
+        setLastCopied({lineWise: false, text: cm.getSelections()});
+      } else if (!cm.options.lineWiseCopyCut) {
+        return
+      } else {
+        var ranges = copyableRanges(cm);
+        setLastCopied({lineWise: true, text: ranges.text});
+        if (e.type == "cut") {
+          cm.setSelections(ranges.ranges, null, sel_dontScroll);
+        } else {
+          input.prevInput = "";
+          te.value = ranges.text.join("\n");
+          selectInput(te);
+        }
+      }
+      if (e.type == "cut") { cm.state.cutIncoming = +new Date; }
+    }
+    on(te, "cut", prepareCopyCut);
+    on(te, "copy", prepareCopyCut);
+
+    on(display.scroller, "paste", function (e) {
+      if (eventInWidget(display, e) || signalDOMEvent(cm, e)) { return }
+      if (!te.dispatchEvent) {
+        cm.state.pasteIncoming = +new Date;
+        input.focus();
