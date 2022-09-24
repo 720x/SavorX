@@ -9765,3 +9765,46 @@
   defineOptions(CodeMirror);
 
   addEditorMethods(CodeMirror);
+
+  // Set up methods on CodeMirror's prototype to redirect to the editor's document.
+  var dontDelegate = "iter insert remove copy getEditor constructor".split(" ");
+  for (var prop in Doc.prototype) { if (Doc.prototype.hasOwnProperty(prop) && indexOf(dontDelegate, prop) < 0)
+    { CodeMirror.prototype[prop] = (function(method) {
+      return function() {return method.apply(this.doc, arguments)}
+    })(Doc.prototype[prop]); } }
+
+  eventMixin(Doc);
+  CodeMirror.inputStyles = {"textarea": TextareaInput, "contenteditable": ContentEditableInput};
+
+  // Extra arguments are stored as the mode's dependencies, which is
+  // used by (legacy) mechanisms like loadmode.js to automatically
+  // load a mode. (Preferred mechanism is the require/define calls.)
+  CodeMirror.defineMode = function(name/*, mode, …*/) {
+    if (!CodeMirror.defaults.mode && name != "null") { CodeMirror.defaults.mode = name; }
+    defineMode.apply(this, arguments);
+  };
+
+  CodeMirror.defineMIME = defineMIME;
+
+  // Minimal default mode.
+  CodeMirror.defineMode("null", function () { return ({token: function (stream) { return stream.skipToEnd(); }}); });
+  CodeMirror.defineMIME("text/plain", "null");
+
+  // EXTENSIONS
+
+  CodeMirror.defineExtension = function (name, func) {
+    CodeMirror.prototype[name] = func;
+  };
+  CodeMirror.defineDocExtension = function (name, func) {
+    Doc.prototype[name] = func;
+  };
+
+  CodeMirror.fromTextArea = fromTextArea;
+
+  addLegacyProps(CodeMirror);
+
+  CodeMirror.version = "5.52.2";
+
+  return CodeMirror;
+
+})));
