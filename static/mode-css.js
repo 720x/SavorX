@@ -13,4 +13,8 @@
 
 CodeMirror.defineMode("css", function(config, parserConfig) {
   var inline = parserConfig.inline
-  if (!parserConfig.propertyKeywords) parserConfig = Code
+  if (!parserConfig.propertyKeywords) parserConfig = CodeMirror.resolveMode("text/css");
+
+  var indentUnit = config.indentUnit,
+      tokenHooks = parserConfig.tokenHooks,
+      documentTypes = parserConfig.documentTypes 
