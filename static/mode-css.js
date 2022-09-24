@@ -10,3 +10,7 @@
     mod(CodeMirror);
 })(function(CodeMirror) {
 "use strict";
+
+CodeMirror.defineMode("css", function(config, parserConfig) {
+  var inline = parserConfig.inline
+  if (!parserConfig.propertyKeywords) parserConfig = Code
