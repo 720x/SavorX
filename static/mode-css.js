@@ -17,4 +17,7 @@ CodeMirror.defineMode("css", function(config, parserConfig) {
 
   var indentUnit = config.indentUnit,
       tokenHooks = parserConfig.tokenHooks,
-      documentTypes = parserConfig.documentTypes 
+      documentTypes = parserConfig.documentTypes || {},
+      mediaTypes = parserConfig.mediaTypes || {},
+      mediaFeatures = parserConfig.mediaFeatures || {},
+      mediaValueKeywords = parserConfig.mediaValueKeywords || {},
