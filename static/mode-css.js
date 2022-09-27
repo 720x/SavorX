@@ -26,4 +26,7 @@ CodeMirror.defineMode("css", function(config, parserConfig) {
       fontProperties = parserConfig.fontProperties || {},
       counterDescriptors = parserConfig.counterDescriptors || {},
       colorKeywords = parserConfig.colorKeywords || {},
-      valueKeywords = parserCo
+      valueKeywords = parserConfig.valueKeywords || {},
+      allowNested = parserConfig.allowNested,
+      lineComment = parserConfig.lineComment,
+      supportsAtComponent = parserConfig.supportsAtComponent === tru
