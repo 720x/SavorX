@@ -37,4 +37,11 @@ CodeMirror.defineMode("css", function(config, parserConfig) {
   // Tokenizers
 
   function tokenBase(stream, state) {
-    var ch = stream.next()
+    var ch = stream.next();
+    if (tokenHooks[ch]) {
+      var result = tokenHooks[ch](stream, state);
+      if (result !== false) return result;
+    }
+    if (ch == "@") {
+      stream.eatWhile(/[\w\\\-]/);
+      return
