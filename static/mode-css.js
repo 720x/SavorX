@@ -29,4 +29,12 @@ CodeMirror.defineMode("css", function(config, parserConfig) {
       valueKeywords = parserConfig.valueKeywords || {},
       allowNested = parserConfig.allowNested,
       lineComment = parserConfig.lineComment,
-      supportsAtComponent = parserConfig.supportsAtComponent === tru
+      supportsAtComponent = parserConfig.supportsAtComponent === true;
+
+  var type, override;
+  function ret(style, tp) { type = tp; return style; }
+
+  // Tokenizers
+
+  function tokenBase(stream, state) {
+    var ch = stream.next()
