@@ -47,4 +47,9 @@ CodeMirror.defineMode("css", function(config, parserConfig) {
       return ret("def", stream.current());
     } else if (ch == "=" || (ch == "~" || ch == "|") && stream.eat("=")) {
       return ret(null, "compare");
-    } else if (ch == "\"" |
+    } else if (ch == "\"" || ch == "'") {
+      state.tokenize = tokenString(ch);
+      return state.tokenize(stream, state);
+    } else if (ch == "#") {
+      stream.eatWhile(/[\w\\\-]/);
+ 
