@@ -62,4 +62,8 @@ CodeMirror.defineMode("css", function(config, parserConfig) {
     } else if (ch === "-") {
       if (/[\d.]/.test(stream.peek())) {
         stream.eatWhile(/[\w.%]/);
-   
+        return ret("number", "unit");
+      } else if (stream.match(/^-[\w\\\-]*/)) {
+        stream.eatWhile(/[\w\\\-]/);
+        if (stream.match(/^\s*:/, false))
+          return ret("variable-2", "va
