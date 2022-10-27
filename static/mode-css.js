@@ -52,4 +52,8 @@ CodeMirror.defineMode("css", function(config, parserConfig) {
       return state.tokenize(stream, state);
     } else if (ch == "#") {
       stream.eatWhile(/[\w\\\-]/);
- 
+      return ret("atom", "hash");
+    } else if (ch == "!") {
+      stream.match(/^\s*\w*/);
+      return ret("keyword", "important");
+    } else if (/\d/.test(ch) || ch == "." && stream.ea
