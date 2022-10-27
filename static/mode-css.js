@@ -56,4 +56,10 @@ CodeMirror.defineMode("css", function(config, parserConfig) {
     } else if (ch == "!") {
       stream.match(/^\s*\w*/);
       return ret("keyword", "important");
-    } else if (/\d/.test(ch) || ch == "." && stream.ea
+    } else if (/\d/.test(ch) || ch == "." && stream.eat(/\d/)) {
+      stream.eatWhile(/[\w.%]/);
+      return ret("number", "unit");
+    } else if (ch === "-") {
+      if (/[\d.]/.test(stream.peek())) {
+        stream.eatWhile(/[\w.%]/);
+   
