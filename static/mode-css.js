@@ -71,4 +71,8 @@ CodeMirror.defineMode("css", function(config, parserConfig) {
       } else if (stream.match(/^\w+-/)) {
         return ret("meta", "meta");
       }
-    } else if (/[,+>*\/]/.test(ch))
+    } else if (/[,+>*\/]/.test(ch)) {
+      return ret(null, "select-op");
+    } else if (ch == "." && stream.match(/^-?[_a-z][_a-z0-9-]*/i)) {
+      return ret("qualifier", "qualifier");
+    } e
