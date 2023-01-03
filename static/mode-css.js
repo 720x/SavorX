@@ -75,4 +75,7 @@ CodeMirror.defineMode("css", function(config, parserConfig) {
       return ret(null, "select-op");
     } else if (ch == "." && stream.match(/^-?[_a-z][_a-z0-9-]*/i)) {
       return ret("qualifier", "qualifier");
-    } e
+    } else if (/[:;{}\[\]\(\)]/.test(ch)) {
+      return ret(null, ch);
+    } else if (stream.match(/[\w-.]+(?=\()/)) {
+      if (/^(url(-prefix)?|domain|regexp)$/.test(stream.curr
