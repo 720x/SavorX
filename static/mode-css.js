@@ -83,4 +83,12 @@ CodeMirror.defineMode("css", function(config, parserConfig) {
       }
       return ret("variable callee", "variable");
     } else if (/[\w\\\-]/.test(ch)) {
-      stream.eatWhi
+      stream.eatWhile(/[\w\\\-]/);
+      return ret("property", "word");
+    } else {
+      return ret(null, null);
+    }
+  }
+
+  function tokenString(quote) {
+    return function(stream,
