@@ -78,4 +78,9 @@ CodeMirror.defineMode("css", function(config, parserConfig) {
     } else if (/[:;{}\[\]\(\)]/.test(ch)) {
       return ret(null, ch);
     } else if (stream.match(/[\w-.]+(?=\()/)) {
-      if (/^(url(-prefix)?|domain|regexp)$/.test(stream.curr
+      if (/^(url(-prefix)?|domain|regexp)$/.test(stream.current().toLowerCase())) {
+        state.tokenize = tokenParenthesized;
+      }
+      return ret("variable callee", "variable");
+    } else if (/[\w\\\-]/.test(ch)) {
+      stream.eatWhi
