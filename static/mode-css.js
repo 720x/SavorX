@@ -91,4 +91,8 @@ CodeMirror.defineMode("css", function(config, parserConfig) {
   }
 
   function tokenString(quote) {
-    return function(stream,
+    return function(stream, state) {
+      var escaped = false, ch;
+      while ((ch = stream.next()) != null) {
+        if (ch == quote && !escaped) {
+          if (quote == ")") stream.ba
