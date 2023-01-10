@@ -108,4 +108,15 @@ CodeMirror.defineMode("css", function(config, parserConfig) {
   function tokenParenthesized(stream, state) {
     stream.next(); // Must be '('
     if (!stream.match(/\s*[\"\')]/, false))
-      state.tokenize
+      state.tokenize = tokenString(")");
+    else
+      state.tokenize = null;
+    return ret(null, "(");
+  }
+
+  // Context management
+
+  function Context(type, indent, prev) {
+    this.type = type;
+    this.indent = indent;
+    this.pr
