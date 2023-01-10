@@ -139,4 +139,12 @@ CodeMirror.defineMode("css", function(config, parserConfig) {
   function popAndPass(type, stream, state, n) {
     for (var i = n || 1; i > 0; i--)
       state.context = state.context.prev;
-    return pass(ty
+    return pass(type, stream, state);
+  }
+
+  // Parser
+
+  function wordAsValue(stream) {
+    var word = stream.current().toLowerCase();
+    if (valueKeywords.hasOwnProperty(word))
+      overr
