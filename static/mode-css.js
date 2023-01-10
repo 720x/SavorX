@@ -134,4 +134,9 @@ CodeMirror.defineMode("css", function(config, parserConfig) {
   }
 
   function pass(type, stream, state) {
-    r
+    return states[state.context.type](type, stream, state);
+  }
+  function popAndPass(type, stream, state, n) {
+    for (var i = n || 1; i > 0; i--)
+      state.context = state.context.prev;
+    return pass(ty
