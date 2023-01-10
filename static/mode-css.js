@@ -101,4 +101,11 @@ CodeMirror.defineMode("css", function(config, parserConfig) {
         escaped = !escaped && ch == "\\";
       }
       if (ch == quote || !escaped && quote != ")") state.tokenize = null;
-  
+      return ret("string", "string");
+    };
+  }
+
+  function tokenParenthesized(stream, state) {
+    stream.next(); // Must be '('
+    if (!stream.match(/\s*[\"\')]/, false))
+      state.tokenize
