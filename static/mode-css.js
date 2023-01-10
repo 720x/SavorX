@@ -119,4 +119,9 @@ CodeMirror.defineMode("css", function(config, parserConfig) {
   function Context(type, indent, prev) {
     this.type = type;
     this.indent = indent;
-    this.pr
+    this.prev = prev;
+  }
+
+  function pushContext(state, stream, type, indent) {
+    state.context = new Context(type, stream.indentation() + (indent === false ? 0 : indentUnit), state.context);
+    return ty
