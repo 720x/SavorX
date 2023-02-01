@@ -147,4 +147,13 @@ CodeMirror.defineMode("css", function(config, parserConfig) {
   function wordAsValue(stream) {
     var word = stream.current().toLowerCase();
     if (valueKeywords.hasOwnProperty(word))
-      overr
+      override = "atom";
+    else if (colorKeywords.hasOwnProperty(word))
+      override = "keyword";
+    else
+      override = "variable";
+  }
+
+  var states = {};
+
+  state
