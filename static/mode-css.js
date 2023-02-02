@@ -156,4 +156,8 @@ CodeMirror.defineMode("css", function(config, parserConfig) {
 
   var states = {};
 
-  state
+  states.top = function(type, stream, state) {
+    if (type == "{") {
+      return pushContext(state, stream, "block");
+    } else if (type == "}" && state.context.prev) {
+      return popContext(state
