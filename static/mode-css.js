@@ -167,4 +167,7 @@ CodeMirror.defineMode("css", function(config, parserConfig) {
       return pushContext(state, stream, "documentTypes");
     } else if (/^@(media|supports|(-moz-)?document|import)$/i.test(type)) {
       return pushContext(state, stream, "atBlock");
-    } els
+    } else if (/^@(font-face|counter-style)/i.test(type)) {
+      state.stateArg = type;
+      return "restricted_atBlock_before";
+    } else if (/^@(-(moz|ms|o|webkit)-)?keyframes$/i.test(
