@@ -175,4 +175,10 @@ CodeMirror.defineMode("css", function(config, parserConfig) {
     } else if (type && type.charAt(0) == "@") {
       return pushContext(state, stream, "at");
     } else if (type == "hash") {
-      override = "builtin
+      override = "builtin";
+    } else if (type == "word") {
+      override = "tag";
+    } else if (type == "variable-definition") {
+      return "maybeprop";
+    } else if (type == "interpolation") {
+      return
