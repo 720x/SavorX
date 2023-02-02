@@ -170,4 +170,9 @@ CodeMirror.defineMode("css", function(config, parserConfig) {
     } else if (/^@(font-face|counter-style)/i.test(type)) {
       state.stateArg = type;
       return "restricted_atBlock_before";
-    } else if (/^@(-(moz|ms|o|webkit)-)?keyframes$/i.test(
+    } else if (/^@(-(moz|ms|o|webkit)-)?keyframes$/i.test(type)) {
+      return "keyframes";
+    } else if (type && type.charAt(0) == "@") {
+      return pushContext(state, stream, "at");
+    } else if (type == "hash") {
+      override = "builtin
