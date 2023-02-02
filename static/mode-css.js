@@ -160,4 +160,7 @@ CodeMirror.defineMode("css", function(config, parserConfig) {
     if (type == "{") {
       return pushContext(state, stream, "block");
     } else if (type == "}" && state.context.prev) {
-      return popContext(state
+      return popContext(state);
+    } else if (supportsAtComponent && /@component/i.test(type)) {
+      return pushContext(state, stream, "atComponentBlock");
+    } else if (/^@(-moz-)?document$/i.test(type)) {
