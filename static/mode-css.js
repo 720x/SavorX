@@ -181,4 +181,8 @@ CodeMirror.defineMode("css", function(config, parserConfig) {
     } else if (type == "variable-definition") {
       return "maybeprop";
     } else if (type == "interpolation") {
-      return
+      return pushContext(state, stream, "interpolation");
+    } else if (type == ":") {
+      return "pseudo";
+    } else if (allowNested && type == "(") {
+      return pushContext(state, strea
