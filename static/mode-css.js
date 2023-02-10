@@ -196,4 +196,8 @@ CodeMirror.defineMode("css", function(config, parserConfig) {
       if (propertyKeywords.hasOwnProperty(word)) {
         override = "property";
         return "maybeprop";
-      } else if (nonStandardPropertyKeywords.hasOwnProperty(word)
+      } else if (nonStandardPropertyKeywords.hasOwnProperty(word)) {
+        override = "string-2";
+        return "maybeprop";
+      } else if (allowNested) {
+        override = stream.match(/^\s*:(?:\s|$)/, false) ? "property" : "
