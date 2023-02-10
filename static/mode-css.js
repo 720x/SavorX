@@ -185,4 +185,11 @@ CodeMirror.defineMode("css", function(config, parserConfig) {
     } else if (type == ":") {
       return "pseudo";
     } else if (allowNested && type == "(") {
-      return pushContext(state, strea
+      return pushContext(state, stream, "parens");
+    }
+    return state.context.type;
+  };
+
+  states.block = function(type, stream, state) {
+    if (type == "word") {
+      var word = stream.current().toLowerCas
