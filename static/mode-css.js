@@ -208,4 +208,10 @@ CodeMirror.defineMode("css", function(config, parserConfig) {
       }
     } else if (type == "meta") {
       return "block";
-    } else if (!allowNeste
+    } else if (!allowNested && (type == "hash" || type == "qualifier")) {
+      override = "error";
+      return "block";
+    } else {
+      return states.top(type, stream, state);
+    }
+  };
