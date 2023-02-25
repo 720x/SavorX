@@ -215,3 +215,10 @@ CodeMirror.defineMode("css", function(config, parserConfig) {
       return states.top(type, stream, state);
     }
   };
+
+  states.maybeprop = function(type, stream, state) {
+    if (type == ":") return pushContext(state, stream, "prop");
+    return pass(type, stream, state);
+  };
+
+  states.p
