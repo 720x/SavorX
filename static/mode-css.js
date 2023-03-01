@@ -232,4 +232,11 @@ CodeMirror.defineMode("css", function(config, parserConfig) {
     } else if (type == "word") {
       wordAsValue(stream);
     } else if (type == "interpolation") {
-      return pushContext(state, stream
+      return pushContext(state, stream, "interpolation");
+    }
+    return "prop";
+  };
+
+  states.propBlock = function(type, _stream, state) {
+    if (type == "}") return popContext(state);
+    if (type == "w
