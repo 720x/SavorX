@@ -239,4 +239,9 @@ CodeMirror.defineMode("css", function(config, parserConfig) {
 
   states.propBlock = function(type, _stream, state) {
     if (type == "}") return popContext(state);
-    if (type == "w
+    if (type == "word") { override = "property"; return "maybeprop"; }
+    return state.context.type;
+  };
+
+  states.parens = function(type, stream, state) {
+    if (type == "{" || type == "}") 
