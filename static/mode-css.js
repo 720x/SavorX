@@ -244,4 +244,7 @@ CodeMirror.defineMode("css", function(config, parserConfig) {
   };
 
   states.parens = function(type, stream, state) {
-    if (type == "{" || type == "}") 
+    if (type == "{" || type == "}") return popAndPass(type, stream, state);
+    if (type == ")") return popContext(state);
+    if (type == "(") return pushContext(state, stream, "parens");
+    if (type == "interpolation") return pushContext(
