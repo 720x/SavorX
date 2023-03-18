@@ -262,4 +262,8 @@ CodeMirror.defineMode("css", function(config, parserConfig) {
     return pass(type, stream, state);
   };
 
-  states.documentTypes =
+  states.documentTypes = function(type, stream, state) {
+    if (type == "word" && documentTypes.hasOwnProperty(stream.current())) {
+      override = "tag";
+      return state.context.type;
+ 
