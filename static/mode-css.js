@@ -266,4 +266,10 @@ CodeMirror.defineMode("css", function(config, parserConfig) {
     if (type == "word" && documentTypes.hasOwnProperty(stream.current())) {
       override = "tag";
       return state.context.type;
- 
+    } else {
+      return states.atBlock(type, stream, state);
+    }
+  };
+
+  states.atBlock = function(type, stream, state) {
+    if (type == "(") return pushContext(state, stream,
