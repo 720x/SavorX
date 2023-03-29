@@ -272,4 +272,6 @@ CodeMirror.defineMode("css", function(config, parserConfig) {
   };
 
   states.atBlock = function(type, stream, state) {
-    if (type == "(") return pushContext(state, stream,
+    if (type == "(") return pushContext(state, stream, "atBlock_parens");
+    if (type == "}" || type == ";") return popAndPass(type, stream, state);
+    if (type == "{") return popContext(state) && pushContext(state, stream, allowNes
