@@ -279,4 +279,8 @@ CodeMirror.defineMode("css", function(config, parserConfig) {
     if (type == "interpolation") return pushContext(state, stream, "interpolation");
 
     if (type == "word") {
-      var word = stream.current()
+      var word = stream.current().toLowerCase();
+      if (word == "only" || word == "not" || word == "and" || word == "or")
+        override = "keyword";
+      else if (mediaTypes.hasOwnProperty(word))
+        override =
