@@ -283,4 +283,8 @@ CodeMirror.defineMode("css", function(config, parserConfig) {
       if (word == "only" || word == "not" || word == "and" || word == "or")
         override = "keyword";
       else if (mediaTypes.hasOwnProperty(word))
-        override =
+        override = "attribute";
+      else if (mediaFeatures.hasOwnProperty(word))
+        override = "property";
+      else if (mediaValueKeywords.hasOwnProperty(word))
+        override 
