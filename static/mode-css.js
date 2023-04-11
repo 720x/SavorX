@@ -297,4 +297,11 @@ CodeMirror.defineMode("css", function(config, parserConfig) {
       else if (colorKeywords.hasOwnProperty(word))
         override = "keyword";
       else
-  
+        override = "error";
+    }
+    return state.context.type;
+  };
+
+  states.atComponentBlock = function(type, stream, state) {
+    if (type == "}")
+      retur
