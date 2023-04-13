@@ -307,4 +307,11 @@ CodeMirror.defineMode("css", function(config, parserConfig) {
       return popAndPass(type, stream, state);
     if (type == "{")
       return popContext(state) && pushContext(state, stream, allowNested ? "block" : "top", false);
-    if (type == "word"
+    if (type == "word")
+      override = "error";
+    return state.context.type;
+  };
+
+  states.atBlock_parens = function(type, stream, state) {
+    if (type == ")") return popContext(state);
+    if (type == "
