@@ -314,4 +314,8 @@ CodeMirror.defineMode("css", function(config, parserConfig) {
 
   states.atBlock_parens = function(type, stream, state) {
     if (type == ")") return popContext(state);
-    if (type == "
+    if (type == "{" || type == "}") return popAndPass(type, stream, state, 2);
+    return states.atBlock(type, stream, state);
+  };
+
+  states.restricted_atBlock_before = function(type, stream, state) {
