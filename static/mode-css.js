@@ -319,3 +319,8 @@ CodeMirror.defineMode("css", function(config, parserConfig) {
   };
 
   states.restricted_atBlock_before = function(type, stream, state) {
+    if (type == "{")
+      return pushContext(state, stream, "restricted_atBlock");
+    if (type == "word" && state.stateArg == "@counter-style") {
+      override = "variable";
+    
