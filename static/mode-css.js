@@ -345,4 +345,10 @@ CodeMirror.defineMode("css", function(config, parserConfig) {
   };
 
   states.keyframes = function(type, stream, state) {
-    if (type == "word") { override = "variable"; ret
+    if (type == "word") { override = "variable"; return "keyframes"; }
+    if (type == "{") return pushContext(state, stream, "top");
+    return pass(type, stream, state);
+  };
+
+  states.at = function(type, stream, state) {
+    if (type == ";") return p
