@@ -354,4 +354,10 @@ CodeMirror.defineMode("css", function(config, parserConfig) {
     if (type == ";") return popContext(state);
     if (type == "{" || type == "}") return popAndPass(type, stream, state);
     if (type == "word") override = "tag";
-    else if (type == "hash") override = "
+    else if (type == "hash") override = "builtin";
+    return "at";
+  };
+
+  states.interpolation = function(type, stream, state) {
+    if (type == "}") return popContext(state);
+    if (type == "{" || type == ";") return popAndPass(type, stre
