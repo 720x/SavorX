@@ -360,4 +360,8 @@ CodeMirror.defineMode("css", function(config, parserConfig) {
 
   states.interpolation = function(type, stream, state) {
     if (type == "}") return popContext(state);
-    if (type == "{" || type == ";") return popAndPass(type, stre
+    if (type == "{" || type == ";") return popAndPass(type, stream, state);
+    if (type == "word") override = "variable";
+    else if (type != "variable" && type != "(" && type != ")") override = "error";
+    return "interpolation";
+  };
