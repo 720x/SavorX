@@ -365,3 +365,10 @@ CodeMirror.defineMode("css", function(config, parserConfig) {
     else if (type != "variable" && type != "(" && type != ")") override = "error";
     return "interpolation";
   };
+
+  return {
+    startState: function(base) {
+      return {tokenize: null,
+              state: inline ? "block" : "top",
+              stateArg: null,
+              context: new Context(i
