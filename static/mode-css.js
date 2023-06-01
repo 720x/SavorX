@@ -376,4 +376,10 @@ CodeMirror.defineMode("css", function(config, parserConfig) {
 
     token: function(stream, state) {
       if (!state.tokenize && stream.eatSpace()) return null;
-      var styl
+      var style = (state.tokenize || tokenBase)(stream, state);
+      if (style && typeof style == "object") {
+        type = style[1];
+        style = style[0];
+      }
+      override = style;
+      if (type !=
