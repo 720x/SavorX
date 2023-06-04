@@ -388,4 +388,7 @@ CodeMirror.defineMode("css", function(config, parserConfig) {
     },
 
     indent: function(state, textAfter) {
-      var cx = state.
+      var cx = state.context, ch = textAfter && textAfter.charAt(0);
+      var indent = cx.indent;
+      if (cx.type == "prop" && (ch == "}" || ch == ")")) cx = cx.prev;
+      if (cx.
