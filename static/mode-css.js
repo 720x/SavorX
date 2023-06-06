@@ -391,4 +391,7 @@ CodeMirror.defineMode("css", function(config, parserConfig) {
       var cx = state.context, ch = textAfter && textAfter.charAt(0);
       var indent = cx.indent;
       if (cx.type == "prop" && (ch == "}" || ch == ")")) cx = cx.prev;
-      if (cx.
+      if (cx.prev) {
+        if (ch == "}" && (cx.type == "block" || cx.type == "top" ||
+                          cx.type == "interpolation" || cx.type == "restricted_atBlock")) {
+          // Resume indent
