@@ -394,4 +394,8 @@ CodeMirror.defineMode("css", function(config, parserConfig) {
       if (cx.prev) {
         if (ch == "}" && (cx.type == "block" || cx.type == "top" ||
                           cx.type == "interpolation" || cx.type == "restricted_atBlock")) {
-          // Resume indent
+          // Resume indentation from parent context.
+          cx = cx.prev;
+          indent = cx.indent;
+        } else if (ch == ")" && (cx.type == "parens" || cx.type == "atBlock_parens") ||
+ 
