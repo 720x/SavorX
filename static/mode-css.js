@@ -412,3 +412,15 @@ CodeMirror.defineMode("css", function(config, parserConfig) {
     blockCommentContinue: " * ",
     lineComment: lineComment,
     fold: "brace"
+  };
+});
+
+  function keySet(array) {
+    var keys = {};
+    for (var i = 0; i < array.length; ++i) {
+      keys[array[i].toLowerCase()] = true;
+    }
+    return keys;
+  }
+
+  
