@@ -423,4 +423,9 @@ CodeMirror.defineMode("css", function(config, parserConfig) {
     return keys;
   }
 
-  
+  var documentTypes_ = [
+    "domain", "regexp", "url", "url-prefix"
+  ], documentTypes = keySet(documentTypes_);
+
+  var mediaTypes_ = [
+    "all", "aural", "braille", "ha
