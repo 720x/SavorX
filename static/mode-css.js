@@ -428,4 +428,9 @@ CodeMirror.defineMode("css", function(config, parserConfig) {
   ], documentTypes = keySet(documentTypes_);
 
   var mediaTypes_ = [
-    "all", "aural", "braille", "ha
+    "all", "aural", "braille", "handheld", "print", "projection", "screen",
+    "tty", "tv", "embossed"
+  ], mediaTypes = keySet(mediaTypes_);
+
+  var mediaFeatures_ = [
+    "width", "min-width", "max-width", "height", "min-hei
