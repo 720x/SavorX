@@ -438,4 +438,6 @@ CodeMirror.defineMode("css", function(config, parserConfig) {
     "min-device-height", "max-device-height", "aspect-ratio",
     "min-aspect-ratio", "max-aspect-ratio", "device-aspect-ratio",
     "min-device-aspect-ratio", "max-device-aspect-ratio", "color", "min-color",
-    "max-color", "color-index", "min-colo
+    "max-color", "color-index", "min-color-index", "max-color-index",
+    "monochrome", "min-monochrome", "max-monochrome", "resolution",
+    "min-resolution", "max-resolution", "scan", "grid", "orienta
