@@ -398,4 +398,9 @@ CodeMirror.defineMode("css", function(config, parserConfig) {
           cx = cx.prev;
           indent = cx.indent;
         } else if (ch == ")" && (cx.type == "parens" || cx.type == "atBlock_parens") ||
- 
+            ch == "{" && (cx.type == "at" || cx.type == "atBlock")) {
+          // Dedent relative to current context.
+          indent = Math.max(0, cx.indent - indentUnit);
+        }
+      }
+  
