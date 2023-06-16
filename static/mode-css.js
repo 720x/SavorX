@@ -403,4 +403,12 @@ CodeMirror.defineMode("css", function(config, parserConfig) {
           indent = Math.max(0, cx.indent - indentUnit);
         }
       }
-  
+      return indent;
+    },
+
+    electricChars: "}",
+    blockCommentStart: "/*",
+    blockCommentEnd: "*/",
+    blockCommentContinue: " * ",
+    lineComment: lineComment,
+    fold: "brace"
