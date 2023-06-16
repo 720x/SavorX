@@ -433,4 +433,7 @@ CodeMirror.defineMode("css", function(config, parserConfig) {
   ], mediaTypes = keySet(mediaTypes_);
 
   var mediaFeatures_ = [
-    "width", "min-width", "max-width", "height", "min-hei
+    "width", "min-width", "max-width", "height", "min-height", "max-height",
+    "device-width", "min-device-width", "max-device-width", "device-height",
+    "min-device-height", "max-device-height", "aspect-ratio",
+    "min-aspect
