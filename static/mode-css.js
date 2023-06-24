@@ -445,4 +445,9 @@ CodeMirror.defineMode("css", function(config, parserConfig) {
     "pointer", "any-pointer", "hover", "any-hover"
   ], mediaFeatures = keySet(mediaFeatures_);
 
-  var mediaValueKey
+  var mediaValueKeywords_ = [
+    "landscape", "portrait", "none", "coarse", "fine", "on-demand", "hover",
+    "interlace", "progressive"
+  ], mediaValueKeywords = keySet(mediaValueKeywords_);
+
+  var propert
