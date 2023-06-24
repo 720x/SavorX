@@ -450,4 +450,7 @@ CodeMirror.defineMode("css", function(config, parserConfig) {
     "interlace", "progressive"
   ], mediaValueKeywords = keySet(mediaValueKeywords_);
 
-  var propert
+  var propertyKeywords_ = [
+    "align-content", "align-items", "align-self", "alignment-adjust",
+    "alignment-baseline", "anchor-point", "animation", "animation-delay",
+    "animat
