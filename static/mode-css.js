@@ -458,4 +458,7 @@ CodeMirror.defineMode("css", function(config, parserConfig) {
     "animation-timing-function", "appearance", "azimuth", "backdrop-filter",
     "backface-visibility", "background", "background-attachment",
     "background-blend-mode", "background-clip", "background-color",
-    "background-image", "background-origin", "backgr
+    "background-image", "background-origin", "background-position",
+    "background-position-x", "background-position-y", "background-repeat",
+    "background-size", "baseline-shift", "binding", "bleed", "block-size",
+   
