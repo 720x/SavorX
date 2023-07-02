@@ -461,4 +461,6 @@ CodeMirror.defineMode("css", function(config, parserConfig) {
     "background-image", "background-origin", "background-position",
     "background-position-x", "background-position-y", "background-repeat",
     "background-size", "baseline-shift", "binding", "bleed", "block-size",
-   
+    "bookmark-label", "bookmark-level", "bookmark-state", "bookmark-target",
+    "border", "border-bottom", "border-bottom-color", "border-bottom-left-radius",
+    "border-bottom-right-radius
