@@ -470,4 +470,6 @@ CodeMirror.defineMode("css", function(config, parserConfig) {
     "border-left-width", "border-radius", "border-right", "border-right-color",
     "border-right-style", "border-right-width", "border-spacing", "border-style",
     "border-top", "border-top-color", "border-top-left-radius",
-    "border-top-right-r
+    "border-top-right-radius", "border-top-style", "border-top-width",
+    "border-width", "bottom", "box-decoration-break", "box-shadow", "box-sizing",
+    "break-after", "break-before
