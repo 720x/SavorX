@@ -465,4 +465,6 @@ CodeMirror.defineMode("css", function(config, parserConfig) {
     "border", "border-bottom", "border-bottom-color", "border-bottom-left-radius",
     "border-bottom-right-radius", "border-bottom-style", "border-bottom-width",
     "border-collapse", "border-color", "border-image", "border-image-outset",
-    "border-image-repeat", "border-image-slice
+    "border-image-repeat", "border-image-slice", "border-image-source",
+    "border-image-width", "border-left", "border-left-color", "border-left-style",
+    "border-left-width", "border-radius", "border-right", "bo
