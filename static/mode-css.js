@@ -476,4 +476,7 @@ CodeMirror.defineMode("css", function(config, parserConfig) {
     "clear", "clip", "color", "color-profile", "column-count", "column-fill",
     "column-gap", "column-rule", "column-rule-color", "column-rule-style",
     "column-rule-width", "column-span", "column-width", "columns", "contain",
-    "content", "counter-increment", "counter
+    "content", "counter-increment", "counter-reset", "crop", "cue", "cue-after",
+    "cue-before", "cursor", "direction", "display", "dominant-baseline",
+    "drop-initial-after-adjust", "drop-initial-after-align",
+    "drop-initial-
