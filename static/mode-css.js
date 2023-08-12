@@ -479,4 +479,6 @@ CodeMirror.defineMode("css", function(config, parserConfig) {
     "content", "counter-increment", "counter-reset", "crop", "cue", "cue-after",
     "cue-before", "cursor", "direction", "display", "dominant-baseline",
     "drop-initial-after-adjust", "drop-initial-after-align",
-    "drop-initial-
+    "drop-initial-before-adjust", "drop-initial-before-align", "drop-initial-size",
+    "drop-initial-value", "elevation", "empty-cells", "fit", "fit-position",
+    "flex", "flex-basis", "flex-direction", "
