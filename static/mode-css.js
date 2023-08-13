@@ -484,3 +484,6 @@ CodeMirror.defineMode("css", function(config, parserConfig) {
     "flex", "flex-basis", "flex-direction", "flex-flow", "flex-grow",
     "flex-shrink", "flex-wrap", "float", "float-offset", "flow-from", "flow-into",
     "font", "font-family", "font-feature-settings", "font-kerning",
+    "font-language-override", "font-optical-sizing", "font-size",
+    "font-size-adjust", "font-stretch", "font-style", "font-synthesis",
+    "font-variant", "font-varian
