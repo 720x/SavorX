@@ -486,4 +486,6 @@ CodeMirror.defineMode("css", function(config, parserConfig) {
     "font", "font-family", "font-feature-settings", "font-kerning",
     "font-language-override", "font-optical-sizing", "font-size",
     "font-size-adjust", "font-stretch", "font-style", "font-synthesis",
-    "font-variant", "font-varian
+    "font-variant", "font-variant-alternates", "font-variant-caps",
+    "font-variant-east-asian", "font-variant-ligatures", "font-variant-numeric",
+    "font-variant-position", "font-variation-settings", "font-wei
