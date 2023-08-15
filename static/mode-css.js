@@ -488,4 +488,7 @@ CodeMirror.defineMode("css", function(config, parserConfig) {
     "font-size-adjust", "font-stretch", "font-style", "font-synthesis",
     "font-variant", "font-variant-alternates", "font-variant-caps",
     "font-variant-east-asian", "font-variant-ligatures", "font-variant-numeric",
-    "font-variant-position", "font-variation-settings", "font-wei
+    "font-variant-position", "font-variation-settings", "font-weight", "gap",
+    "grid", "grid-area", "grid-auto-columns", "grid-auto-flow", "grid-auto-rows",
+    "grid-column", "grid-column-end", "grid-column-gap", "grid-column-start",
+    "
