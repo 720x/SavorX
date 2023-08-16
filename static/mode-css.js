@@ -495,4 +495,6 @@ CodeMirror.defineMode("css", function(config, parserConfig) {
     "grid-template", "grid-template-areas", "grid-template-columns",
     "grid-template-rows", "hanging-punctuation", "height", "hyphens", "icon",
     "image-orientation", "image-rendering", "image-resolution", "inline-box-align",
-    "inset", "inset-block", "inset-block-end", "inset-bloc
+    "inset", "inset-block", "inset-block-end", "inset-block-start", "inset-inline",
+    "inset-inline-end", "inset-inline-start", "isolation", "justify-content",
+    "justify-items", "justify-self", "left", "letter-spacing", 
