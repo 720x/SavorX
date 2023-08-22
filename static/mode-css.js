@@ -497,4 +497,6 @@ CodeMirror.defineMode("css", function(config, parserConfig) {
     "image-orientation", "image-rendering", "image-resolution", "inline-box-align",
     "inset", "inset-block", "inset-block-end", "inset-block-start", "inset-inline",
     "inset-inline-end", "inset-inline-start", "isolation", "justify-content",
-    "justify-items", "justify-self", "left", "letter-spacing", 
+    "justify-items", "justify-self", "left", "letter-spacing", "line-break",
+    "line-height", "line-height-step", "line-stacking", "line-stacking-ruby",
+    "line-stacking-shift", "line-stacking-strategy", "list-style",
