@@ -500,3 +500,6 @@ CodeMirror.defineMode("css", function(config, parserConfig) {
     "justify-items", "justify-self", "left", "letter-spacing", "line-break",
     "line-height", "line-height-step", "line-stacking", "line-stacking-ruby",
     "line-stacking-shift", "line-stacking-strategy", "list-style",
+    "list-style-image", "list-style-position", "list-style-type", "margin",
+    "margin-bottom", "margin-left", "margin-right", "margin-top", "marks",
+    "marquee-direction",
