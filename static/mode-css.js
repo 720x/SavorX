@@ -509,4 +509,6 @@ CodeMirror.defineMode("css", function(config, parserConfig) {
     "nav-up", "object-fit", "object-position", "offset", "offset-anchor",
     "offset-distance", "offset-path", "offset-position", "offset-rotate",
     "opacity", "order", "orphans", "outline", "outline-color", "outline-offset",
-    "outline-style", "outline-width"
+    "outline-style", "outline-width", "overflow", "overflow-style",
+    "overflow-wrap", "overflow-x", "overflow-y", "padding", "padding-bottom",
+    "padding-left", "padding-right", "padding-top"
