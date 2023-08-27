@@ -504,4 +504,6 @@ CodeMirror.defineMode("css", function(config, parserConfig) {
     "margin-bottom", "margin-left", "margin-right", "margin-top", "marks",
     "marquee-direction", "marquee-loop", "marquee-play-count", "marquee-speed",
     "marquee-style", "max-block-size", "max-height", "max-inline-size",
-    "max-width", "min-block-size", "min-height",
+    "max-width", "min-block-size", "min-height", "min-inline-size", "min-width",
+    "mix-blend-mode", "move-to", "nav-down", "nav-index", "nav-left", "nav-right",
+    "nav-up", "object-fit", "object-position", "offset", "offset-anchor"
