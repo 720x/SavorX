@@ -521,4 +521,6 @@ CodeMirror.defineMode("css", function(config, parserConfig) {
     "rest-before", "richness", "right", "rotate", "rotation", "rotation-point",
     "row-gap", "ruby-align", "ruby-overhang", "ruby-position", "ruby-span",
     "scale", "scroll-behavior", "scroll-margin", "scroll-margin-block",
-    "scroll-margin
+    "scroll-margin-block-end", "scroll-margin-block-start", "scroll-margin-bottom",
+    "scroll-margin-inline", "scroll-margin-inline-end",
+    "scroll-margin-inline-start", "scroll-margin-left", "scro
