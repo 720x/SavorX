@@ -526,4 +526,6 @@ CodeMirror.defineMode("css", function(config, parserConfig) {
     "scroll-margin-inline-start", "scroll-margin-left", "scroll-margin-right",
     "scroll-margin-top", "scroll-padding", "scroll-padding-block",
     "scroll-padding-block-end", "scroll-padding-block-start",
-    "scroll-padding-bottom", "scroll-
+    "scroll-padding-bottom", "scroll-padding-inline", "scroll-padding-inline-end",
+    "scroll-padding-inline-start", "scroll-padding-left", "scroll-padding-right",
+    "scroll-padding-top", "scro
