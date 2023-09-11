@@ -528,4 +528,6 @@ CodeMirror.defineMode("css", function(config, parserConfig) {
     "scroll-padding-block-end", "scroll-padding-block-start",
     "scroll-padding-bottom", "scroll-padding-inline", "scroll-padding-inline-end",
     "scroll-padding-inline-start", "scroll-padding-left", "scroll-padding-right",
-    "scroll-padding-top", "scro
+    "scroll-padding-top", "scroll-snap-align", "scroll-snap-type",
+    "shape-image-threshold", "shape-inside", "shape-margin", "shape-outside",
+    "size", "speak", "speak-as", "speak-heade
