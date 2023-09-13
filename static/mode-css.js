@@ -530,4 +530,6 @@ CodeMirror.defineMode("css", function(config, parserConfig) {
     "scroll-padding-inline-start", "scroll-padding-left", "scroll-padding-right",
     "scroll-padding-top", "scroll-snap-align", "scroll-snap-type",
     "shape-image-threshold", "shape-inside", "shape-margin", "shape-outside",
-    "size", "speak", "speak-as", "speak-heade
+    "size", "speak", "speak-as", "speak-header", "speak-numeral",
+    "speak-punctuation", "speech-rate", "stress", "string-set", "tab-size",
+    "table-layout", "target", "target-name", "target-new", "target-position",
