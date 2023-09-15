@@ -533,3 +533,5 @@ CodeMirror.defineMode("css", function(config, parserConfig) {
     "size", "speak", "speak-as", "speak-header", "speak-numeral",
     "speak-punctuation", "speech-rate", "stress", "string-set", "tab-size",
     "table-layout", "target", "target-name", "target-new", "target-position",
+    "text-align", "text-align-last", "text-combine-upright", "text-decoration",
+    "text-decoration-color", "text-decoration-line", "text-decoration-s
