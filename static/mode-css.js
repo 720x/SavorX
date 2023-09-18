@@ -540,4 +540,6 @@ CodeMirror.defineMode("css", function(config, parserConfig) {
     "text-height", "text-indent", "text-justify", "text-orientation",
     "text-outline", "text-overflow", "text-rendering", "text-shadow",
     "text-size-adjust", "text-space-collapse", "text-transform",
-    "text
+    "text-underline-position", "text-wrap", "top", "transform", "transform-origin",
+    "transform-style", "transition", "transition-delay", "transition-duration",
+    "transition-property", "tr
