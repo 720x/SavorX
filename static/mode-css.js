@@ -546,4 +546,7 @@ CodeMirror.defineMode("css", function(config, parserConfig) {
     "unicode-bidi", "user-select", "vertical-align", "visibility", "voice-balance",
     "voice-duration", "voice-family", "voice-pitch", "voice-range", "voice-rate",
     "voice-stress", "voice-volume", "volume", "white-space", "widows", "width",
-    "will-change", "word-break", "word-spacing", "
+    "will-change", "word-break", "word-spacing", "word-wrap", "writing-mode", "z-index",
+    // SVG-specific
+    "clip-path", "clip-rule", "mask", "enable-background", "filter", "flood-color",
+    "flood-opacity", "lighting-colo
