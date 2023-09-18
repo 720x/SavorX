@@ -537,4 +537,7 @@ CodeMirror.defineMode("css", function(config, parserConfig) {
     "text-decoration-color", "text-decoration-line", "text-decoration-skip",
     "text-decoration-skip-ink", "text-decoration-style", "text-emphasis",
     "text-emphasis-color", "text-emphasis-position", "text-emphasis-style",
-    "text-height", "text-indent", "t
+    "text-height", "text-indent", "text-justify", "text-orientation",
+    "text-outline", "text-overflow", "text-rendering", "text-shadow",
+    "text-size-adjust", "text-space-collapse", "text-transform",
+    "text
