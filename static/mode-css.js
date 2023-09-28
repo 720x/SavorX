@@ -551,4 +551,6 @@ CodeMirror.defineMode("css", function(config, parserConfig) {
     "clip-path", "clip-rule", "mask", "enable-background", "filter", "flood-color",
     "flood-opacity", "lighting-color", "stop-color", "stop-opacity", "pointer-events",
     "color-interpolation", "color-interpolation-filters",
-    "color-rendering", "fill", "fill-opacity", "fill-rule",
+    "color-rendering", "fill", "fill-opacity", "fill-rule", "image-rendering",
+    "marker", "marker-end", "marker-mid", "marker-start", "shape-rendering", "stroke",
+    "stroke-dasharray", "stroke-dashoffset", "stroke-linecap", "stroke-linejo
