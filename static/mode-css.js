@@ -561,4 +561,6 @@ CodeMirror.defineMode("css", function(config, parserConfig) {
 
   var nonStandardPropertyKeywords_ = [
     "border-block", "border-block-color", "border-block-end",
-    "border-block-en
+    "border-block-end-color", "border-block-end-style", "border-block-end-width",
+    "border-block-start", "border-block-start-color", "border-block-start-style",
+    "border-block-start-width", "border-block-style",
