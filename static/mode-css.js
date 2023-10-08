@@ -571,4 +571,6 @@ CodeMirror.defineMode("css", function(config, parserConfig) {
     "border-inline-style", "border-inline-width", "margin-block",
     "margin-block-end", "margin-block-start", "margin-inline", "margin-inline-end",
     "margin-inline-start", "padding-block", "padding-block-end",
-    "padding-block-start", "padding-inline", "p
+    "padding-block-start", "padding-inline", "padding-inline-end",
+    "padding-inline-start", "scroll-snap-stop", "scrollbar-3d-light-color",
+    "scrollbar-arrow-color", "scrollbar-base-color", "scrollbar-dark-shadow-color",
