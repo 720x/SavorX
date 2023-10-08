@@ -566,4 +566,7 @@ CodeMirror.defineMode("css", function(config, parserConfig) {
     "border-block-start-width", "border-block-style", "border-block-width",
     "border-inline", "border-inline-color", "border-inline-end",
     "border-inline-end-color", "border-inline-end-style",
-    "border-inline-end-width", "border-inline
+    "border-inline-end-width", "border-inline-start", "border-inline-start-color",
+    "border-inline-start-style", "border-inline-start-width",
+    "border-inline-style", "border-inline-width", "margin-block",
+    "margi
