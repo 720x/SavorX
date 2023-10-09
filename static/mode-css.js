@@ -576,4 +576,8 @@ CodeMirror.defineMode("css", function(config, parserConfig) {
     "scrollbar-arrow-color", "scrollbar-base-color", "scrollbar-dark-shadow-color",
     "scrollbar-face-color", "scrollbar-highlight-color", "scrollbar-shadow-color",
     "scrollbar-track-color", "searchfield-cancel-button", "searchfield-decoration",
-    "searchfield
+    "searchfield-results-button", "searchfield-results-decoration", "shape-inside", "zoom"
+  ], nonStandardPropertyKeywords = keySet(nonStandardPropertyKeywords_);
+
+  var fontProperties_ = [
+    "font-displ
