@@ -580,4 +580,6 @@ CodeMirror.defineMode("css", function(config, parserConfig) {
   ], nonStandardPropertyKeywords = keySet(nonStandardPropertyKeywords_);
 
   var fontProperties_ = [
-    "font-displ
+    "font-display", "font-family", "src", "unicode-range", "font-variant",
+     "font-feature-settings", "font-stretch", "font-weight", "font-style"
+  ], fontProperties = keySet(fontPropertie
