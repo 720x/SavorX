@@ -582,4 +582,9 @@ CodeMirror.defineMode("css", function(config, parserConfig) {
   var fontProperties_ = [
     "font-display", "font-family", "src", "unicode-range", "font-variant",
      "font-feature-settings", "font-stretch", "font-weight", "font-style"
-  ], fontProperties = keySet(fontPropertie
+  ], fontProperties = keySet(fontProperties_);
+
+  var counterDescriptors_ = [
+    "additive-symbols", "fallback", "negative", "pad", "prefix", "range",
+    "speak-as", "suffix", "symbols", "system"
+  ], counterDesc
