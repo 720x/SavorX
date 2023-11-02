@@ -587,4 +587,8 @@ CodeMirror.defineMode("css", function(config, parserConfig) {
   var counterDescriptors_ = [
     "additive-symbols", "fallback", "negative", "pad", "prefix", "range",
     "speak-as", "suffix", "symbols", "system"
-  ], counterDesc
+  ], counterDescriptors = keySet(counterDescriptors_);
+
+  var colorKeywords_ = [
+    "aliceblue", "antiquewhite", "aqua", "aquamarine", "azure", "beige",
+    "bisque", "black", "blanchedalmond", 
