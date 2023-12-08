@@ -604,4 +604,6 @@ CodeMirror.defineMode("css", function(config, parserConfig) {
     "lavenderblush", "lawngreen", "lemonchiffon", "lightblue", "lightcoral",
     "lightcyan", "lightgoldenrodyellow", "lightgray", "lightgreen", "lightpink",
     "lightsalmon", "lightseagreen", "lightskyblue", "lightslategray",
-    "lightsteelblue", "ligh
+    "lightsteelblue", "lightyellow", "lime", "limegreen", "linen", "magenta",
+    "maroon", "mediumaquamarine", "mediumblue", "mediumorchid", "mediumpurple",
+    "mediumseagreen", "mediumslateblue", "mediumspringgreen", "mediumturq
