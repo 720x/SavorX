@@ -609,4 +609,7 @@ CodeMirror.defineMode("css", function(config, parserConfig) {
     "mediumseagreen", "mediumslateblue", "mediumspringgreen", "mediumturquoise",
     "mediumvioletred", "midnightblue", "mintcream", "mistyrose", "moccasin",
     "navajowhite", "navy", "oldlace", "olive", "olivedrab", "orange", "orangered",
-    "
+    "orchid", "palegoldenrod", "palegreen", "paleturquoise", "palevioletred",
+    "papayawhip", "peachpuff", "peru", "pink", "plum", "powderblue",
+    "purple", "rebeccapurple", "red", "rosybrown", "royalblue", "saddlebrown",
+    "sa
