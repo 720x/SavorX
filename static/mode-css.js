@@ -612,4 +612,6 @@ CodeMirror.defineMode("css", function(config, parserConfig) {
     "orchid", "palegoldenrod", "palegreen", "paleturquoise", "palevioletred",
     "papayawhip", "peachpuff", "peru", "pink", "plum", "powderblue",
     "purple", "rebeccapurple", "red", "rosybrown", "royalblue", "saddlebrown",
-    "sa
+    "salmon", "sandybrown", "seagreen", "seashell", "sienna", "silver", "skyblue",
+    "slateblue", "slategray", "snow", "springgreen", "steelblue", "tan",
+    "teal", "th
