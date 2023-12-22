@@ -619,3 +619,6 @@ CodeMirror.defineMode("css", function(config, parserConfig) {
   ], colorKeywords = keySet(colorKeywords_);
 
   var valueKeywords_ = [
+    "above", "absolute", "activeborder", "additive", "activecaption", "afar",
+    "after-white-space", "ahead", "alias", "all", "all-scroll", "alphabetic", "alternate",
+    "always", "amharic", "am
