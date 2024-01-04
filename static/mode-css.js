@@ -625,4 +625,6 @@ CodeMirror.defineMode("css", function(config, parserConfig) {
     "arabic-indic", "armenian", "asterisks", "attr", "auto", "auto-flow", "avoid", "avoid-column", "avoid-page",
     "avoid-region", "background", "backwards", "baseline", "below", "bidi-override", "binary",
     "bengali", "blink", "block", "block-axis", "bold", "bolder", "border", "border-box",
-    "both", "bo
+    "both", "bottom", "break", "break-all", "break-word", "bullets", "button", "button-bevel",
+    "buttonface", "buttonhighlight", "buttonshadow", "buttontext", "calc", "cambodian",
+    "capitalize", "ca
