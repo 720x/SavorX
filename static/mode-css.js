@@ -641,4 +641,7 @@ CodeMirror.defineMode("css", function(config, parserConfig) {
     "dotted", "double", "down", "e-resize", "ease", "ease-in", "ease-in-out", "ease-out",
     "element", "ellipse", "ellipsis", "embed", "end", "ethiopic", "ethiopic-abegede",
     "ethiopic-abegede-am-et", "ethiopic-abegede-gez", "ethiopic-abegede-ti-er",
-    "ethiopic-abegede-ti-et", "ethiopic-haleha
+    "ethiopic-abegede-ti-et", "ethiopic-halehame-aa-er",
+    "ethiopic-halehame-aa-et", "ethiopic-halehame-am-et",
+    "ethiopic-halehame-gez", "ethiopic-halehame-om-et",
+    "ethiopic-halehame-sid-et", "ethiopic-halehame-s
