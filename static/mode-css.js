@@ -636,4 +636,7 @@ CodeMirror.defineMode("css", function(config, parserConfig) {
     "cross", "crosshair", "currentcolor", "cursive", "cyclic", "darken", "dashed", "decimal",
     "decimal-leading-zero", "default", "default-button", "dense", "destination-atop",
     "destination-in", "destination-out", "destination-over", "devanagari", "difference",
-    "disc", "discard", "disclosure-close
+    "disc", "discard", "disclosure-closed", "disclosure-open", "document",
+    "dot-dash", "dot-dot-dash",
+    "dotted", "double", "down", "e-resize", "ease", "ease-in", "ease-in-out", "ease-out",
+    "element", "elli
