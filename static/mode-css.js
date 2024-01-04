@@ -632,4 +632,6 @@ CodeMirror.defineMode("css", function(config, parserConfig) {
     "cjk-heavenly-stem", "cjk-ideographic", "clear", "clip", "close-quote",
     "col-resize", "collapse", "color", "color-burn", "color-dodge", "column", "column-reverse",
     "compact", "condensed", "contain", "content", "contents",
-    "content
+    "content-box", "context-menu", "continuous", "copy", "counter", "counters", "cover", "crop",
+    "cross", "crosshair", "currentcolor", "cursive", "cyclic", "darken", "dashed", "decimal",
+    "decimal-leading-zero"
