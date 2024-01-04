@@ -634,4 +634,6 @@ CodeMirror.defineMode("css", function(config, parserConfig) {
     "compact", "condensed", "contain", "content", "contents",
     "content-box", "context-menu", "continuous", "copy", "counter", "counters", "cover", "crop",
     "cross", "crosshair", "currentcolor", "cursive", "cyclic", "darken", "dashed", "decimal",
-    "decimal-leading-zero"
+    "decimal-leading-zero", "default", "default-button", "dense", "destination-atop",
+    "destination-in", "destination-out", "destination-over", "devanagari", "difference",
+    "disc", "discard", "disclosure-close
