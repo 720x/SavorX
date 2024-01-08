@@ -657,4 +657,6 @@ CodeMirror.defineMode("css", function(config, parserConfig) {
     "inline-block", "inline-flex", "inline-grid", "inline-table", "inset", "inside", "intrinsic", "invert",
     "italic", "japanese-formal", "japanese-informal", "justify", "kannada",
     "katakana", "katakana-iroha", "keep-all", "khmer",
-    "korean-hangul-formal", "korean-hanja-
+    "korean-hangul-formal", "korean-hanja-formal", "korean-hanja-informal",
+    "landscape", "lao", "large", "larger", "left", "level", "lighter", "lighten",
+    "line-through", "linear", "linear-gradient", "lines", "list-item",
