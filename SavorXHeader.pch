@@ -33,8 +33,8 @@
 //-------------------友盟-------------------------
 #define UmengAppkey @"57be6121e0f55a9171000905"
 
-#define AliyunAccessKeyID @"LTAI5tJr2xs9Rbg6AquzgQtJ"
-#define AliyunAccessKeySecret @"ifL4QA2AQmxMd4mE4oQV5eSr2aAAFt"
+#define AliyunAccessKeyID @"LTAI5t6TE16fsnLHhW3wqLur"
+#define AliyunAccessKeySecret @"i1o3VtgxTNGgYGUS8W8o8CMnQhq81H"
 
 #define STBURL [NSString stringWithFormat:@"http://%@",[GlobalData shared].RDBoxDevice.BoxIP] //机顶盒地址
 #define HTTPServerDocument [NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES) objectAtIndex:0]
