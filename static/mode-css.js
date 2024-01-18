@@ -664,4 +664,7 @@ CodeMirror.defineMode("css", function(config, parserConfig) {
     "lower-greek", "lower-hexadecimal", "lower-latin", "lower-norwegian",
     "lower-roman", "lowercase", "ltr", "luminosity", "malayalam", "match", "matrix", "matrix3d",
     "media-controls-background", "media-current-time-display",
-    "media-fullscreen-button
+    "media-fullscreen-button", "media-mute-button", "media-play-button",
+    "media-return-to-realtime-button", "media-rewind-button",
+    "media-seek-back-button", "media-seek-forward-button", "media-slider",
+    "media-sli
