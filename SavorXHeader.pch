@@ -1,0 +1,109 @@
+//
+//  SavorXHeader.pch
+//  SavorX
+//
+//  Created by 郭春城 on 16/7/19.
+//  Copyright © 2016年 郭春城. All rights reserved.
+//
+
+#ifndef SavorXHeader_pch
+#define SavorXHeader_pch
+
+#import "SAVORXAPI.h"
+#import "GlobalData.h"
+#import "MBProgressHUD+Custom.h"
+#import "HTTPServerManager.h"
+#import "UIColor+YYAdditions.h"
+#import "UMMobClick/MobClick.h"
+#import "Masonry.h"
+#import "SystemMacro.h"
+#import "ColorMacro.h"
+#import "LayoutMacro.h"
+#import "Helper.h"
+#import "UIView+Additional.h"
+#import "UIImage+Additional.h"
+
+// Include any system framework and library headers here that should be included in all compilation units.
+// You will also need to set the Prefix Header build setting of one or more of your targets to reference this file.
+
+
+#define TEST_DEV_TYPE 1 //测试环境切换宏，1代表线上环境，0代表测试环境
+
+
+//-------------------友盟-------------------------
+#define UmengAppkey @"57be6121e0f55a9171000905"
+
+#define AliyunAccessKeyID @"LTAI5tJr2xs9Rbg6AquzgQtJ"
+#define AliyunAccessKeySecret @"ifL4QA2AQmxMd4mE4oQV5eSr2aAAFt"
+
+#define STBURL [NSString stringWithFormat:@"http://%@",[GlobalData shared].RDBoxDevice.BoxIP] //机顶盒地址
+#define HTTPServerDocument [NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES) objectAtIndex:0]
+
+#define FileCachePath [NSString stringWithFormat:@"%@/FileCache", HTTPServerDocument]
+#define ImageDocument [NSString stringWithFormat:@"%@/FileCache/ImageCache", HTTPServerDocument]
+#define VideoDocument [NSString stringWithFormat:@"%@/FileCache/VideoCache", HTTPServerDocument]
+#define PDFDocument [NSString stringWithFormat:@"%@/FileCache/PDFCache", HTTPServerDocument]
+#define DOCDocument [NSString stringWithFormat:@"%@/FileCache/DOCCache", HTTPServerDocument]
+#define EXCELDocument [NSString stringWithFormat:@"%@/FileCache/EXCELCache", HTTPServerDocument]
+#define PPTDocument [NSString stringWithFormat:@"%@/FileCache/PPTCache", HTTPServerDocument]
+#define SystemImage [NSString stringWithFormat:@"%@/FileCache/systemImage", HTTPServerDocument]
+#define CategoryCache [NSString stringWithFormat:@"%@/FileCache/categoryCache", HTTPServerDocument]
+
+#define RDLogPath [NSString stringWithFormat:@"%@/RDLog.log", HTTPServerDocument]
+#define RDLogCachePath [NSString stringWithFormat:@"%@/RDLogCache", HTTPServerDocument]
+
+#define RDScreenVideoName @"littlehotspot.mp4"
+
+#define NSURLCachePath [[NSSearchPathForDirectoriesInDomains(NSCachesDirectory, NSUserDomainMask, YES) lastObject] stringByAppendingString:@"/NSURLCachePath"]
+
+#define kMAXPhotoNum 50 
+
+//-------------------图片大小-------------------------
+#define ImageSize 500*1024
+#define CollectionViewCellSize CGSizeMake((kScreen_Width - 16) / 3, (kScreen_Width - 16) / 3)
+
+//-------------------尺寸信息-------------------------
+#define kScreen_Width ([UIScreen mainScreen].bounds.size.width)
+#define kScreen_Height ([UIScreen mainScreen].bounds.size.height)
+#define NavHeight 64.f
+#define TabBarHeight 49.f
+
+//-------------------字体大小-------------------------
+#define FontSizeDefault 14.0f
+#define FontSizeSmall 12.0f
+#define FontSizeBig 16.0f
+
+//-------------------其他-------------------------
+
+#define FileManage [NSFileManager defaultManager]
+#define UserDefault [NSUserDefaults standardUserDefaults]
+
+#define VCBackgroundColor [UIColor colorWithHexString:@"#ece6de"]
+#define FontColor [UIColor colorWithHexString:@"#d8b964"]
+#define PhotoToolTitleColor [UIColor colorWithHexString:@"#c49053"]
+
+#define BoxUrl @"boxUrl"
+#define PlatformUrl @"platformUrl"
+#define DocumentVC @"DocumentVC"
+#define VideoVC @"VideoVC"
+
+
+/*
+ 1.请打开并连接房间wifi（引导页&帮助页）
+ 2.哦耶！连接电视成功 (toast 1.5秒）
+ 3.糟糕，连接失败，检查是否在同一wifi下（toast1.5秒）
+ 4.哦耶，投屏成功！（toast1.5秒）
+ 
+ 5.糟糕，投屏失败，请检查网络wifi（toast1.5秒）
+ */
+//-------------------信息-------------------------
+#define ScreenFailure RDLocalizedString(@"RDString_FailedWithScreen")
+#define DemandFailure RDLocalizedString(@"RDString_FailedWithDemand")
+#define LastTime @"LastTime"
+#define HasLaunched @"HasLaunched"
+#define keychainID @"HotTopicsKeychainID"
+#define RDAreaID @"RDAreaID"
+#define crashType @"crashType"
+#define RDDownLoadURL @"http://www.littlehotspot.com/d"
+
+#endif /* SavorXHeader_pch */

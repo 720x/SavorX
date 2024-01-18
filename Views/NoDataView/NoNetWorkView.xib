@@ -1,0 +1,99 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<document type="com.apple.InterfaceBuilder3.CocoaTouch.XIB" version="3.0" toolsVersion="12120" systemVersion="16F73" targetRuntime="iOS.CocoaTouch" propertyAccessControl="none" useAutolayout="YES" useTraitCollections="YES" colorMatched="YES">
+    <device id="retina4_7" orientation="portrait">
+        <adaptation id="fullscreen"/>
+    </device>
+    <dependencies>
+        <deployment identifier="iOS"/>
+        <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="12088"/>
+        <capability name="documents saved in the Xcode 8 format" minToolsVersion="8.0"/>
+    </dependencies>
+    <objects>
+        <placeholder placeholderIdentifier="IBFilesOwner" id="-1" userLabel="File's Owner"/>
+        <placeholder placeholderIdentifier="IBFirstResponder" id="-2" customClass="UIResponder"/>
+        <view contentMode="scaleToFill" id="rwC-6D-vD1" customClass="NoNetWorkView">
+            <rect key="frame" x="0.0" y="0.0" width="375" height="667"/>
+            <autoresizingMask key="autoresizingMask"/>
+            <subviews>
+                <view contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" id="A37-II-nxt">
+                    <rect key="frame" x="0.0" y="0.0" width="375" height="667"/>
+                    <subviews>
+                        <imageView userInteractionEnabled="NO" contentMode="scaleToFill" horizontalHuggingPriority="251" verticalHuggingPriority="251" image="bad.png" translatesAutoresizingMaskIntoConstraints="NO" id="fNR-Aj-42M">
+                            <rect key="frame" x="76.5" y="187.5" width="221" height="112"/>
+                            <constraints>
+                                <constraint firstAttribute="width" constant="221" id="1bZ-t8-Rnn"/>
+                                <constraint firstAttribute="height" constant="112" id="lEC-sF-Odl"/>
+                            </constraints>
+                        </imageView>
+                        <label opaque="NO" clipsSubviews="YES" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="网络开小差咯~" textAlignment="center" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="JQ6-Ru-cXJ" userLabel="网络开小差咯~">
+                            <rect key="frame" x="137.5" y="321.5" width="100.5" height="18"/>
+                            <fontDescription key="fontDescription" type="system" pointSize="15"/>
+                            <color key="textColor" red="0.40000000000000002" green="0.40000000000000002" blue="0.40000000000000002" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
+                            <nil key="highlightedColor"/>
+                        </label>
+                        <label opaque="NO" clipsSubviews="YES" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="" textAlignment="center" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="HxV-7y-yYg">
+                            <rect key="frame" x="187.5" y="347.5" width="0.0" height="0.0"/>
+                            <fontDescription key="fontDescription" type="system" pointSize="16"/>
+                            <color key="textColor" red="0.9675067663192749" green="0.19466732442378998" blue="0.08095763623714447" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
+                            <nil key="highlightedColor"/>
+                        </label>
+                    </subviews>
+                    <constraints>
+                        <constraint firstAttribute="centerX" secondItem="HxV-7y-yYg" secondAttribute="centerX" id="0cz-nr-8BM"/>
+                        <constraint firstItem="JQ6-Ru-cXJ" firstAttribute="top" secondItem="fNR-Aj-42M" secondAttribute="bottom" constant="22" id="GRB-Yg-QqS"/>
+                        <constraint firstAttribute="centerX" secondItem="fNR-Aj-42M" secondAttribute="centerX" constant="-8" id="JOt-j4-ZuD"/>
+                        <constraint firstAttribute="centerX" secondItem="fNR-Aj-42M" secondAttribute="centerX" id="LVB-sW-zmP"/>
+                        <constraint firstAttribute="centerY" secondItem="fNR-Aj-42M" secondAttribute="centerY" constant="65" id="Tb3-ui-yaH"/>
+                        <constraint firstItem="HxV-7y-yYg" firstAttribute="top" secondItem="JQ6-Ru-cXJ" secondAttribute="bottom" constant="8" id="oSc-GR-37g"/>
+                        <constraint firstAttribute="centerX" secondItem="JQ6-Ru-cXJ" secondAttribute="centerX" id="pym-py-nC3"/>
+                        <constraint firstAttribute="centerY" secondItem="fNR-Aj-42M" secondAttribute="centerY" constant="65" id="v8k-Hv-vjA"/>
+                        <constraint firstAttribute="centerY" secondItem="JQ6-Ru-cXJ" secondAttribute="centerY" constant="3" id="vVK-x8-8V4"/>
+                    </constraints>
+                    <variation key="default">
+                        <mask key="constraints">
+                            <exclude reference="JOt-j4-ZuD"/>
+                            <exclude reference="Tb3-ui-yaH"/>
+                            <exclude reference="v8k-Hv-vjA"/>
+                        </mask>
+                    </variation>
+                </view>
+                <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="5Le-UF-m2L">
+                    <rect key="frame" x="0.0" y="0.0" width="375" height="667"/>
+                    <rect key="contentStretch" x="0.10000000000000001" y="0.10000000000000001" width="0.10000000000000001" height="0.10000000000000001"/>
+                    <fontDescription key="fontDescription" type="system" pointSize="17"/>
+                    <state key="normal">
+                        <color key="titleColor" red="1" green="1" blue="1" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
+                        <color key="titleShadowColor" red="0.26666666666666666" green="0.26666666666666666" blue="0.26666666666666666" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
+                    </state>
+                    <connections>
+                        <action selector="reloadBtnClicked:" destination="rwC-6D-vD1" eventType="touchUpInside" id="D9P-BP-Rno"/>
+                    </connections>
+                </button>
+            </subviews>
+            <color key="backgroundColor" red="0.93725490196078431" green="0.93725490196078431" blue="0.93725490196078431" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
+            <constraints>
+                <constraint firstAttribute="bottom" secondItem="A37-II-nxt" secondAttribute="bottom" id="Pv3-YP-cV4"/>
+                <constraint firstAttribute="trailing" secondItem="A37-II-nxt" secondAttribute="trailing" id="TLp-gU-xhY"/>
+                <constraint firstItem="A37-II-nxt" firstAttribute="leading" secondItem="rwC-6D-vD1" secondAttribute="leading" id="brJ-hQ-0g8"/>
+                <constraint firstItem="5Le-UF-m2L" firstAttribute="top" secondItem="rwC-6D-vD1" secondAttribute="top" id="fhK-Hk-V0E"/>
+                <constraint firstItem="A37-II-nxt" firstAttribute="top" secondItem="rwC-6D-vD1" secondAttribute="top" id="igJ-0M-uOi"/>
+                <constraint firstAttribute="bottom" secondItem="5Le-UF-m2L" secondAttribute="bottom" id="kDe-ft-JeY"/>
+                <constraint firstAttribute="trailing" secondItem="5Le-UF-m2L" secondAttribute="trailing" id="nqT-u3-izn"/>
+                <constraint firstItem="5Le-UF-m2L" firstAttribute="leading" secondItem="rwC-6D-vD1" secondAttribute="leading" id="oPY-ej-QJR"/>
+            </constraints>
+            <nil key="simulatedTopBarMetrics"/>
+            <connections>
+                <outlet property="contentView" destination="A37-II-nxt" id="Q3N-Fe-lnT"/>
+                <outlet property="descLabel" destination="JQ6-Ru-cXJ" id="bqK-Mb-te5"/>
+                <outlet property="flagImageView" destination="fNR-Aj-42M" id="sQT-ti-Oya"/>
+                <outlet property="imageHeightConstraint" destination="lEC-sF-Odl" id="vAI-hD-VEs"/>
+                <outlet property="imageWidthConstraint" destination="1bZ-t8-Rnn" id="GrQ-HN-9Tw"/>
+                <outlet property="touchScrrenLabel" destination="HxV-7y-yYg" id="NLe-X8-ULn"/>
+            </connections>
+            <point key="canvasLocation" x="243" y="197"/>
+        </view>
+    </objects>
+    <resources>
+        <image name="bad.png" width="140" height="140"/>
+    </resources>
+</document>
