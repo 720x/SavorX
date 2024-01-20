@@ -669,4 +669,6 @@ CodeMirror.defineMode("css", function(config, parserConfig) {
     "media-seek-back-button", "media-seek-forward-button", "media-slider",
     "media-sliderthumb", "media-time-remaining-display", "media-volume-slider",
     "media-volume-slider-container", "media-volume-sliderthumb", "medium",
-    "menu", "menulist", "menulist-button", "menul
+    "menu", "menulist", "menulist-button", "menulist-text",
+    "menulist-textfield", "menutext", "message-box", "middle", "min-intrinsic",
+    "mix", "mongolian", "monospace", "move", "multiple", "multiply", "myanmar", "
