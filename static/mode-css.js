@@ -667,4 +667,6 @@ CodeMirror.defineMode("css", function(config, parserConfig) {
     "media-fullscreen-button", "media-mute-button", "media-play-button",
     "media-return-to-realtime-button", "media-rewind-button",
     "media-seek-back-button", "media-seek-forward-button", "media-slider",
-    "media-sli
+    "media-sliderthumb", "media-time-remaining-display", "media-volume-slider",
+    "media-volume-slider-container", "media-volume-sliderthumb", "medium",
+    "menu", "menulist", "menulist-button", "menul
