@@ -673,4 +673,6 @@ CodeMirror.defineMode("css", function(config, parserConfig) {
     "menulist-textfield", "menutext", "message-box", "middle", "min-intrinsic",
     "mix", "mongolian", "monospace", "move", "multiple", "multiply", "myanmar", "n-resize",
     "narrower", "ne-resize", "nesw-resize", "no-close-quote", "no-drop",
-    "no-open-quote", "no-repeat", "none", "normal", "not-allowed", "n
+    "no-open-quote", "no-repeat", "none", "normal", "not-allowed", "nowrap",
+    "ns-resize", "numbers", "numeric", "nw-resize", "nwse-resize", "oblique", "octal", "opacity", "open-quote",
+    "optimizeLegibility", "optimizeSpeed", "oriya",
