@@ -675,4 +675,7 @@ CodeMirror.defineMode("css", function(config, parserConfig) {
     "narrower", "ne-resize", "nesw-resize", "no-close-quote", "no-drop",
     "no-open-quote", "no-repeat", "none", "normal", "not-allowed", "nowrap",
     "ns-resize", "numbers", "numeric", "nw-resize", "nwse-resize", "oblique", "octal", "opacity", "open-quote",
-    "optimizeLegibility", "optimizeSpeed", "oriya",
+    "optimizeLegibility", "optimizeSpeed", "oriya", "oromo", "outset",
+    "outside", "outside-shape", "overlay", "overline", "padding", "padding-box",
+    "painted", "page", "paused", "persian", "perspective", "plus-darker", "plus-lighter",
+    "po
