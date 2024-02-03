@@ -684,4 +684,6 @@ CodeMirror.defineMode("css", function(config, parserConfig) {
     "relative", "repeat", "repeating-linear-gradient",
     "repeating-radial-gradient", "repeat-x", "repeat-y", "reset", "reverse",
     "rgb", "rgba", "ridge", "right", "rotate", "rotate3d", "rotateX", "rotateY",
-    "rotateZ", "round", "row", "row-resize", "row-reverse", "rtl", "run-in", "run
+    "rotateZ", "round", "row", "row-resize", "row-reverse", "rtl", "run-in", "running",
+    "s-resize", "sans-serif", "saturation", "scale", "scale3d", "scaleX", "scaleY", "scaleZ", "screen",
+    "scroll", "scrollbar", "scroll-position", "se-resize
