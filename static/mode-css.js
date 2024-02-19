@@ -689,4 +689,6 @@ CodeMirror.defineMode("css", function(config, parserConfig) {
     "scroll", "scrollbar", "scroll-position", "se-resize", "searchfield",
     "searchfield-cancel-button", "searchfield-decoration",
     "searchfield-results-button", "searchfield-results-decoration", "self-start", "self-end",
-    "semi-co
+    "semi-condensed", "semi-expanded", "separate", "serif", "show", "sidama",
+    "simp-chinese-formal", "simp-chinese-informal", "single",
+    "skew", "skewX", "skewY", "skip-white-space"
