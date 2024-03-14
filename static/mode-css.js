@@ -693,4 +693,6 @@ CodeMirror.defineMode("css", function(config, parserConfig) {
     "simp-chinese-formal", "simp-chinese-informal", "single",
     "skew", "skewX", "skewY", "skip-white-space", "slide", "slider-horizontal",
     "slider-vertical", "sliderthumb-horizontal", "sliderthumb-vertical", "slow",
-    "small", "small-caps", "small-caption", "smaller", "soft-light", "solid",
+    "small", "small-caps", "small-caption", "smaller", "soft-light", "solid", "somali",
+    "source-atop", "source-in", "source-out", "source-over", "space", "space-around", "space-between", "space-evenly", "spell-out", "square",
+    "square-button", "start", "sta
