@@ -700,4 +700,7 @@ CodeMirror.defineMode("css", function(config, parserConfig) {
     "table-caption", "table-cell", "table-column", "table-column-group",
     "table-footer-group", "table-header-group", "table-row", "table-row-group",
     "tamil",
-    "telugu", "text", "text-bottom", "text-top", "textarea", "textfield", 
+    "telugu", "text", "text-bottom", "text-top", "textarea", "textfield", "thai",
+    "thick", "thin", "threeddarkshadow", "threedface", "threedhighlight",
+    "threedlightshadow", "threedshadow", "tibetan", "tigre", "tigrinya-er",
+    "tigri
