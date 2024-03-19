@@ -705,4 +705,7 @@ CodeMirror.defineMode("css", function(config, parserConfig) {
     "threedlightshadow", "threedshadow", "tibetan", "tigre", "tigrinya-er",
     "tigrinya-er-abegede", "tigrinya-et", "tigrinya-et-abegede", "to", "top",
     "trad-chinese-formal", "trad-chinese-informal", "transform",
-    "translate", "translate3d", "translateX", "tr
+    "translate", "translate3d", "translateX", "translateY", "translateZ",
+    "transparent", "ultra-condensed", "ultra-expanded", "underline", "unset", "up",
+    "upper-alpha", "upper-armenian", "upper-greek", "upper-hexadecimal",
+    "up
