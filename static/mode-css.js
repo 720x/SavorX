@@ -708,4 +708,6 @@ CodeMirror.defineMode("css", function(config, parserConfig) {
     "translate", "translate3d", "translateX", "translateY", "translateZ",
     "transparent", "ultra-condensed", "ultra-expanded", "underline", "unset", "up",
     "upper-alpha", "upper-armenian", "upper-greek", "upper-hexadecimal",
-    "up
+    "upper-latin", "upper-norwegian", "upper-roman", "uppercase", "urdu", "url",
+    "var", "vertical", "vertical-text", "visible", "visibleFill", "visiblePainted",
+    "visibleStroke", "visual
