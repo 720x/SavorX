@@ -727,4 +727,12 @@ CodeMirror.defineMode("css", function(config, parserConfig) {
         state.tokenize = null;
         break;
       }
-  
+      maybeEnd = (ch == "*");
+    }
+    return ["comment", "comment"];
+  }
+
+  CodeMirror.defineMIME("text/css", {
+    documentTypes: documentTypes,
+    mediaTypes: mediaTypes,
+    mediaFeatures: m
