@@ -745,4 +745,12 @@ CodeMirror.defineMode("css", function(config, parserConfig) {
     valueKeywords: valueKeywords,
     tokenHooks: {
       "/": function(stream, state) {
-       
+        if (!stream.eat("*")) return false;
+        state.tokenize = tokenCComment;
+        return tokenCComment(stream, state);
+      }
+    },
+    name: "css"
+  });
+
+  CodeMirror.defineMIME("t
