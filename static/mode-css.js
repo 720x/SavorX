@@ -753,4 +753,9 @@ CodeMirror.defineMode("css", function(config, parserConfig) {
     name: "css"
   });
 
-  CodeMirror.defineMIME("t
+  CodeMirror.defineMIME("text/x-scss", {
+    mediaTypes: mediaTypes,
+    mediaFeatures: mediaFeatures,
+    mediaValueKeywords: mediaValueKeywords,
+    propertyKeywords: propertyKeywords,
+    nonStandardPropertyKeywords: nonSta
