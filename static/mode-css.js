@@ -758,4 +758,10 @@ CodeMirror.defineMode("css", function(config, parserConfig) {
     mediaFeatures: mediaFeatures,
     mediaValueKeywords: mediaValueKeywords,
     propertyKeywords: propertyKeywords,
-    nonStandardPropertyKeywords: nonSta
+    nonStandardPropertyKeywords: nonStandardPropertyKeywords,
+    colorKeywords: colorKeywords,
+    valueKeywords: valueKeywords,
+    fontProperties: fontProperties,
+    allowNested: true,
+    lineComment: "//",
+    to
