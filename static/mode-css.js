@@ -764,4 +764,9 @@ CodeMirror.defineMode("css", function(config, parserConfig) {
     fontProperties: fontProperties,
     allowNested: true,
     lineComment: "//",
-    to
+    tokenHooks: {
+      "/": function(stream, state) {
+        if (stream.eat("/")) {
+          stream.skipToEnd();
+          return ["comment", "comment"];
+        } else if (stream.ea
