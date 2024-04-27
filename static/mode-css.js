@@ -769,4 +769,9 @@ CodeMirror.defineMode("css", function(config, parserConfig) {
         if (stream.eat("/")) {
           stream.skipToEnd();
           return ["comment", "comment"];
-        } else if (stream.ea
+        } else if (stream.eat("*")) {
+          state.tokenize = tokenCComment;
+          return tokenCComment(stream, state);
+        } else {
+          return ["operator", "operator"];
+        }
