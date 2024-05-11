@@ -775,3 +775,11 @@ CodeMirror.defineMode("css", function(config, parserConfig) {
         } else {
           return ["operator", "operator"];
         }
+      },
+      ":": function(stream) {
+        if (stream.match(/\s*\{/, false))
+          return [null, null]
+        return false;
+      },
+      "$": function(stream) {
+        stream.match(/^
