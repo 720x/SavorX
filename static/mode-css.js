@@ -782,4 +782,9 @@ CodeMirror.defineMode("css", function(config, parserConfig) {
         return false;
       },
       "$": function(stream) {
-        stream.match(/^
+        stream.match(/^[\w-]+/);
+        if (stream.match(/^\s*:/, false))
+          return ["variable-2", "variable-definition"];
+        return ["variable-2", "variable"];
+      },
+      "#
