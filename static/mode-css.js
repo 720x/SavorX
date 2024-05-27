@@ -787,4 +787,13 @@ CodeMirror.defineMode("css", function(config, parserConfig) {
           return ["variable-2", "variable-definition"];
         return ["variable-2", "variable"];
       },
-      "#
+      "#": function(stream) {
+        if (!stream.eat("{")) return false;
+        return [null, "interpolation"];
+      }
+    },
+    name: "css",
+    helperType: "scss"
+  });
+
+  Code
