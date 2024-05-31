@@ -796,4 +796,8 @@ CodeMirror.defineMode("css", function(config, parserConfig) {
     helperType: "scss"
   });
 
-  Code
+  CodeMirror.defineMIME("text/x-less", {
+    mediaTypes: mediaTypes,
+    mediaFeatures: mediaFeatures,
+    mediaValueKeywords: mediaValueKeywords,
+    propertyKeywords: propertyKeywo
