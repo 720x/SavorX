@@ -800,4 +800,9 @@ CodeMirror.defineMode("css", function(config, parserConfig) {
     mediaTypes: mediaTypes,
     mediaFeatures: mediaFeatures,
     mediaValueKeywords: mediaValueKeywords,
-    propertyKeywords: propertyKeywo
+    propertyKeywords: propertyKeywords,
+    nonStandardPropertyKeywords: nonStandardPropertyKeywords,
+    colorKeywords: colorKeywords,
+    valueKeywords: valueKeywords,
+    fontProperties: fontProperties,
+    al
