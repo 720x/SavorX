@@ -805,4 +805,11 @@ CodeMirror.defineMode("css", function(config, parserConfig) {
     colorKeywords: colorKeywords,
     valueKeywords: valueKeywords,
     fontProperties: fontProperties,
-    al
+    allowNested: true,
+    lineComment: "//",
+    tokenHooks: {
+      "/": function(stream, state) {
+        if (stream.eat("/")) {
+          stream.skipToEnd();
+          return ["comment", "comment"];
+   
