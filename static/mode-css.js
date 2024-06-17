@@ -816,4 +816,9 @@ CodeMirror.defineMode("css", function(config, parserConfig) {
           state.tokenize = tokenCComment;
           return tokenCComment(stream, state);
         } else {
-          return ["operator", "ope
+          return ["operator", "operator"];
+        }
+      },
+      "@": function(stream) {
+        if (stream.eat("{")) return [null, "interpolation"];
+        if (stream.match(/^(charset|document|font-face|import|(-(moz|ms|o
