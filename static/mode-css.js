@@ -831,4 +831,12 @@ CodeMirror.defineMode("css", function(config, parserConfig) {
         return ["atom", "atom"];
       }
     },
-    name:
+    name: "css",
+    helperType: "less"
+  });
+
+  CodeMirror.defineMIME("text/x-gss", {
+    documentTypes: documentTypes,
+    mediaTypes: mediaTypes,
+    mediaFeatures: mediaFeatures,
+    propertyKeywords: propertyKey
