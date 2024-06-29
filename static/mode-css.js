@@ -844,4 +844,9 @@ CodeMirror.defineMode("css", function(config, parserConfig) {
     fontProperties: fontProperties,
     counterDescriptors: counterDescriptors,
     colorKeywords: colorKeywords,
-    value
+    valueKeywords: valueKeywords,
+    supportsAtComponent: true,
+    tokenHooks: {
+      "/": function(stream, state) {
+        if (!stream.eat("*")) return false;
+        state.tokenize = tok
