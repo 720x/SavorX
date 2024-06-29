@@ -849,4 +849,12 @@ CodeMirror.defineMode("css", function(config, parserConfig) {
     tokenHooks: {
       "/": function(stream, state) {
         if (!stream.eat("*")) return false;
-        state.tokenize = tok
+        state.tokenize = tokenCComment;
+        return tokenCComment(stream, state);
+      }
+    },
+    name: "css",
+    helperType: "gss"
+  });
+
+});
