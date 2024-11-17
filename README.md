@@ -1,12 +1,4 @@
-
-
-
-#SavorX
-
-aliyun oss
-
-
-# md-to-pdf
+# SavorX
 
 A web service for converting markdown to PDF
 
@@ -38,23 +30,6 @@ Send data from files like this:
 curl --data-urlencode "markdown=$(cat example.md)" 
 ```
 
-## Deploy
-
-A prebuilt container image is available at [Docker Hub](https://hub.docker.com/r/spawnia/md-to-pdf).
-The container starts up the web service and listens for HTTP on port 8000.
-
-You can run it yourself like this:
-
-```shell
-docker run --publish=8000:8000 spawnia/md-to-pdf
-```
-
-You may configure the webserver through [Rocket environment variables](https://rocket.rs/guide/v0.5/configuration#environment-variables).
-For example, you could allow larger payloads by increasing the limit for form data:
-
-```dotenv
-ROCKET_LIMITS={form="1MiB"}
-```
 
 ## Built with
 
